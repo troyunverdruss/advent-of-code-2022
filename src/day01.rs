@@ -1,6 +1,6 @@
+use crate::utils::lines_into_numbers;
 use crate::utils::read_chunks;
 use crate::utils::split_chunks_into_line_groups;
-use crate::utils::lines_into_numbers;
 
 pub fn part_one() -> u64 {
   let elf_sums = get_elf_sums();
@@ -29,4 +29,3 @@ fn get_elf_sums() -> Vec<u64> {
     .map(|f| f.iter().sum::<u64>())
     .collect()
 }
-
