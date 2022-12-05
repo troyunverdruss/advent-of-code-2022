@@ -29,6 +29,7 @@ pub fn read_chunks(filename: &str, splitter: &str) -> Vec<String> {
   let input = read_input(filename);
   input.split(splitter)
     .map(String::from)
+    .filter(|s| !s.is_empty())
     .collect()
 }
 
