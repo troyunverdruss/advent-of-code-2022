@@ -82,7 +82,7 @@ fn score_round_part_two(round_input: &Vec<String>) -> u64 {
     Some(ro) => ro.as_str()
   };
 
-  let mut response_played = "NOT SPECIFIED";
+  let response_played;
 
   // X = I must lose
   // Y = I must draw
