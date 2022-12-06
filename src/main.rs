@@ -3,6 +3,7 @@ mod utils;
 mod day02;
 mod day03;
 mod day04;
+mod day05;
 
 fn main() {
   let solution_day01_part1 = day01::part_one();
@@ -24,4 +25,9 @@ fn main() {
   println!("Day 4, part 1: score for all common letters: {}", solution_day04_part1);
   let solution_day04_part2 = day04::part_two();
   println!("Day 4, part 2: your total score: {}", solution_day04_part2);
+
+  let solution_day05_part1 = day05::part_one();
+  println!("Day 5, part 1: score for all common letters: {}", solution_day05_part1);
+  let solution_day05_part2 = day05::part_two();
+  println!("Day 5, part 2: your total score: {}", solution_day05_part2);
 }
