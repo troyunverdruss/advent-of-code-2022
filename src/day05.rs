@@ -1,4 +1,4 @@
-use std::collections::{HashMap, LinkedList, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use crate::utils::read_chunks;
 
 pub fn part_one() -> String {
@@ -90,7 +90,7 @@ fn parse_sorted_stacks(stacks_blob: &String) -> HashMap<u64, VecDeque<char>> {
   }
 
   let mut sorted_stacks = HashMap::new();
-  for (k, stack) in unsorted_stacks {
+  for (_, stack) in unsorted_stacks {
     let new_key = stack.last().unwrap().to_digit(10).unwrap() as u64;
 
     for v in stack {
