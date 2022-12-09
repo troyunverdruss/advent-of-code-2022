@@ -5,6 +5,7 @@ mod day03;
 mod day04;
 mod day05;
 mod day06;
+mod day07;
 
 fn main() {
   let solution_day01_part1 = day01::part_one();
@@ -36,4 +37,9 @@ fn main() {
   println!("Day 6, part 1: chars processed to reach end of first start of packet marker: {}", solution_day06_part1);
   let solution_day06_part2 = day06::part_two();
   println!("Day 6, part 2: chars processed to reach end of first start of message marker: {}", solution_day06_part2);
+
+  let solution_day07_part1 = day07::part_one();
+  println!("Day 7, part 1: sum of sizes for all dirs less than 100000: {}", solution_day07_part1);
+  let solution_day07_part2 = day07::part_two();
+  println!("Day 7, part 2: smallest size of dir that would free up enough space: {}", solution_day07_part2);
 }
