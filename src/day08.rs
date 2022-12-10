@@ -62,11 +62,6 @@ fn is_visible(grid: &HashMap<Point, u64>, loc: &Point, height: &u64) -> bool {
     .filter(|(k, v)| k.x == loc.x && k.y > loc.y && v.to_owned() >= height)
     .count();
 
-  let test = Point{ x: 3, y: 1 };
-  if loc == &test {
-    let x = 0;
-  }
-
   higher_trees_left == 0 || higher_trees_right == 0 || higher_trees_up == 0 || higher_trees_down == 0
 }
 
@@ -82,16 +77,78 @@ fn get_visible_locations(grid: &HashMap<Point, u64>) -> Vec<Point> {
     .collect()
 }
 
-
 fn solve_two(lines: &Vec<String>) -> u64 {
   let grid = lines_to_grid(&lines);
-  0
+  grid
+    .keys()
+    .map(|loc| compute_scenic_score(&grid, loc))
+    .max()
+    .unwrap()
+}
+
+fn compute_scenic_score(grid: &HashMap<Point, u64>, location: &Point) -> u64 {
+  let min_x = 0;
+  let min_y = 0;
+  let max_x = grid.keys().max_by_key(|k| k.x).unwrap().to_owned().x;
+  let max_y = grid.keys().max_by_key(|k| k.y).unwrap().to_owned().y;
+
+  let current_tree_height = grid.get(location).unwrap();
+
+  let mut visible_left = 0;
+ if location.x > 0 {
+  for x in (min_x..=(location.x - 1)).rev() {
+    if grid.get(&Point { x, y: location.y }).unwrap() < current_tree_height {
+      visible_left += 1;
+    } else {
+      visible_left += 1;
+      break;
+    }
+  };
+}
+
+  let mut visible_right = 0;
+  if location.x < max_x {
+    for x in (location.x + 1)..=max_x {
+      if grid.get(&Point {x, y: location.y}).unwrap() < current_tree_height {
+        visible_right += 1;
+      } else {
+        visible_right += 1;
+        break;
+      }
+    };
+  }
+
+    let mut visible_up = 0;
+  if location.y > 0 {
+    for y in (min_y..=(location.y - 1)).rev() {
+      if grid.get(&Point { x: location.x, y }).unwrap() < current_tree_height {
+        visible_up += 1;
+      } else {
+        visible_up += 1;
+        break;
+      }
+    };
+  }
+
+  let mut visible_down = 0;
+  if location.y < max_y {
+    for y in (location.y + 1)..=max_y {
+      if grid.get(&Point { x: location.x, y }).unwrap() < current_tree_height {
+        visible_down += 1;
+      } else {
+        visible_down += 1;
+        break;
+      }
+    };
+  }
+
+  visible_left * visible_right * visible_up * visible_down
 }
 
 #[cfg(test)]
 mod tests {
   use std::collections::HashSet;
-  use crate::day08::{get_visible_locations, lines_to_grid, Point, solve_one, solve_two};
+  use crate::day08::{compute_scenic_score, get_visible_locations, lines_to_grid, Point, solve_one, solve_two};
 
   #[test]
   fn test_solving_part_1() {
@@ -161,6 +218,23 @@ mod tests {
     assert!(!visible.contains(&Point { x: 3, y: 3 }));
   }
 
+  #[test]
+  fn test_scenic_score_1() {
+    let inputs = get_inputs();
+    let grid = lines_to_grid(&inputs);
+    let result = compute_scenic_score(&grid, &Point{x: 2, y: 1});
+
+    assert_eq!(result, 4);
+  }
+
+  #[test]
+  fn test_scenic_score_2() {
+    let inputs = get_inputs();
+    let grid = lines_to_grid(&inputs);
+    let result = compute_scenic_score(&grid, &Point{x: 2, y: 3});
+
+    assert_eq!(result, 8);
+  }
   #[test]
   fn test_solving_part_2() {
     let inputs = get_inputs();
