@@ -7,6 +7,7 @@ mod day05;
 mod day06;
 mod day07;
 mod day08;
+mod day09;
 
 fn main() {
   let solution_day01_part1 = day01::part_one();
@@ -44,8 +45,14 @@ fn main() {
   let solution_day07_part2 = day07::part_two();
   println!("Day 7, part 2: smallest size of dir that would free up enough space: {}", solution_day07_part2);
 
-  let solution_day08_part1 = day08::part_one();
-  println!("Day 8, part 1: total number of trees visible from outside the grid: {}", solution_day08_part1);
-  let solution_day08_part2 = day08::part_two();
-  println!("Day 8, part 2: highest scenic score for any tree: {}", solution_day08_part2);
+  // let solution_day08_part1 = day08::part_one();
+  // println!("Day 8, part 1: total number of trees visible from outside the grid: {}", solution_day08_part1);
+  // let solution_day08_part2 = day08::part_two();
+  // println!("Day 8, part 2: highest scenic score for any tree: {}", solution_day08_part2);
+  println!("Day 8 is slow, uncomment to see results");
+
+  let solution_day09_part1 = day09::part_one();
+  println!("Day 9, part 1: total number of trees visible from outside the grid: {}", solution_day09_part1);
+  let solution_day09_part2 = day09::part_two();
+  println!("Day 9, part 2: highest scenic score for any tree: {}", solution_day09_part2);
 }
