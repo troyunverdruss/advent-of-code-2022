@@ -1,4 +1,5 @@
 use std::collections::{HashMap};
+use std::ops::Add;
 use crate::utils::read_chunks;
 
 pub fn part_one() -> u64 {
@@ -23,7 +24,7 @@ fn lines_to_grid(lines: &Vec<String>) -> HashMap<Point, u64> {
         .enumerate()
         .for_each(|(x, tree)| {
           let tree_height: u64 = tree.to_string().parse().expect("Should be an int");
-          grid.insert(Point { x: x as u64, y: y as u64 }, tree_height);
+          grid.insert(Point { x: x as i64, y: y as i64 }, tree_height);
         })
     });
 
@@ -31,9 +32,17 @@ fn lines_to_grid(lines: &Vec<String>) -> HashMap<Point, u64> {
 }
 
 #[derive(PartialOrd, PartialEq, Hash, Debug, Eq, Ord, Clone, Copy)]
-struct Point {
-  x: u64,
-  y: u64,
+pub struct Point {
+  pub(crate) x: i64,
+  pub(crate) y: i64,
+}
+
+impl Add for Point {
+  type Output = Self;
+
+  fn add(self, rhs: Self) -> Self::Output {
+    Point {x: self.x + rhs.x, y: self.y + rhs.y }
+  }
 }
 
 fn solve_one(lines: &Vec<String>) -> u64 {
