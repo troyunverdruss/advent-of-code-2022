@@ -52,7 +52,7 @@ fn main() {
   println!("Day 8 is slow, uncomment to see results");
 
   let solution_day09_part1 = day09::part_one();
-  println!("Day 9, part 1: total number of trees visible from outside the grid: {}", solution_day09_part1);
+  println!("Day 9, part 1: locations that the tail has visited: {}", solution_day09_part1);
   let solution_day09_part2 = day09::part_two();
-  println!("Day 9, part 2: highest scenic score for any tree: {}", solution_day09_part2);
+  println!("Day 9, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day09_part2);
 }
