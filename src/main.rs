@@ -8,6 +8,7 @@ mod day06;
 mod day07;
 mod day08;
 mod day09;
+mod day10;
 
 fn main() {
   let solution_day01_part1 = day01::part_one();
@@ -55,4 +56,9 @@ fn main() {
   println!("Day 9, part 1: locations that the tail has visited: {}", solution_day09_part1);
   let solution_day09_part2 = day09::part_two();
   println!("Day 9, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day09_part2);
+
+  let solution_day10_part1 = day10::part_one();
+  println!("Day 10, part 1: sum of interesting signal strengths: {}", solution_day10_part1);
+  let solution_day10_part2 = day10::part_two();
+  println!("Day 10, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day10_part2);
 }
