@@ -3,7 +3,7 @@ use crate::day08::Point;
 use crate::utils::read_chunks;
 
 pub fn part_one() -> i64 {
-  let lines = read_chunks("day09.txt", "\n");
+  let lines = read_chunks("day10.txt", "\n");
   solve_one(&lines)
 }
 
@@ -20,8 +20,9 @@ fn solve_one(lines: &Vec<String>) -> i64 {
   let key_cycles = vec![20, 60, 100, 140, 180, 220];
   let mut key_values: Vec<i64> = Vec::new();
 
+  let line_len = lines.len();
   for line in lines {
-    if line == "noop" {
+    if line.contains("noop") {
       // do nothing
       cycle += 1;
     } else {
@@ -52,6 +53,7 @@ mod tests {
     let result = solve_one(&inputs);
     assert_eq!(result, 13140);
   }
+
   #[test]
   fn test_simple_sample_1() {
     let inputs = get_basic_input();
