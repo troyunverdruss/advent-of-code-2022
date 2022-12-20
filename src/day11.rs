@@ -14,6 +14,7 @@ pub fn part_two() -> u64 {
 }
 
 
+#[derive(Clone)]
 struct Monkey {
   name: String,
   items: Vec<i64>,
@@ -25,18 +26,6 @@ struct Monkey {
 }
 
 impl Monkey {
-  fn clone_exact(self: &Self) -> Monkey {
-    Monkey {
-      name: self.name.to_string(),
-      items: self.items.clone(),
-      operator: self.operator.to_string(),
-      operand: self.operand.to_string(),
-      test_divisible_by: self.test_divisible_by.clone(),
-      dest_if_true: self.dest_if_true.clone(),
-      dest_if_false: self.dest_if_false.clone(),
-    }
-  }
-
   fn clone_new_items(self: &Self, new_items: &Vec<i64>) -> Monkey {
     Monkey {
       name: self.name.to_string(),
@@ -124,7 +113,7 @@ fn solve_one(groups: &Vec<String>) -> i64 {
 
   for round in 0..20 {
     for curr_monkey_id in 0..monkeys.len() {
-      let curr_monkey = monkeys.get(curr_monkey_id).unwrap().clone_exact();
+      let curr_monkey = monkeys.get(curr_monkey_id).unwrap().clone();
       for item in &curr_monkey.items {
         inspections[curr_monkey_id] = inspections.get(curr_monkey_id).unwrap() + 1;
         let worry_operand = if curr_monkey.operand == "old" {
@@ -143,13 +132,13 @@ fn solve_one(groups: &Vec<String>) -> i64 {
         let mut dest_monkey_id;
         if worry_operand % curr_monkey.test_divisible_by == 0 {
           dest_monkey_id = curr_monkey.dest_if_true as usize;
-          let dest_monkey = monkeys.get(dest_monkey_id).unwrap().clone_exact();
+          let dest_monkey = monkeys.get(dest_monkey_id).unwrap().clone();
           let mut new_items = dest_monkey.items.clone();
           new_items.push(worry_operand);
           updated_dest_monkey = dest_monkey.clone_new_items(&new_items);
         } else {
           dest_monkey_id = curr_monkey.dest_if_false as usize;
-          let dest_monkey = monkeys.get(dest_monkey_id).unwrap().clone_exact();
+          let dest_monkey = monkeys.get(dest_monkey_id).unwrap().clone();
           let mut new_items = dest_monkey.items.clone();
           new_items.push(worry_operand);
           updated_dest_monkey = dest_monkey.clone_new_items(&new_items);
