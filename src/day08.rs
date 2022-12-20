@@ -12,7 +12,7 @@ pub fn part_two() -> u64 {
   solve_two(&lines)
 }
 
-fn lines_to_grid(lines: &Vec<String>) -> HashMap<Point, u64> {
+fn lines_to_grid_number_val(lines: &Vec<String>) -> HashMap<Point, u64> {
   let mut grid = HashMap::new();
 
   lines
@@ -46,7 +46,7 @@ impl Add for Point {
 }
 
 fn solve_one(lines: &Vec<String>) -> u64 {
-  let grid = lines_to_grid(&lines);
+  let grid = lines_to_grid_number_val(&lines);
 
   get_visible_locations(&grid)
     .iter()
@@ -87,7 +87,7 @@ fn get_visible_locations(grid: &HashMap<Point, u64>) -> Vec<Point> {
 }
 
 fn solve_two(lines: &Vec<String>) -> u64 {
-  let grid = lines_to_grid(&lines);
+  let grid = lines_to_grid_number_val(&lines);
   grid
     .keys()
     .map(|loc| compute_scenic_score(&grid, loc))
@@ -157,7 +157,7 @@ fn compute_scenic_score(grid: &HashMap<Point, u64>, location: &Point) -> u64 {
 #[cfg(test)]
 mod tests {
   use std::collections::HashSet;
-  use crate::day08::{compute_scenic_score, get_visible_locations, lines_to_grid, Point, solve_one, solve_two};
+  use crate::day08::{compute_scenic_score, get_visible_locations, lines_to_grid_number_val, Point, solve_one, solve_two};
 
   #[test]
   fn test_solving_part_1() {
@@ -194,7 +194,7 @@ mod tests {
   #[test]
   fn test_verify_center_square() {
     let inputs = get_inputs();
-    let grid = lines_to_grid(&inputs);
+    let grid = lines_to_grid_number_val(&inputs);
     let visible = get_visible_locations(&grid);
 
     let visible_hs: HashSet<Point> = HashSet::from_iter(visible.clone());
@@ -230,7 +230,7 @@ mod tests {
   #[test]
   fn test_scenic_score_1() {
     let inputs = get_inputs();
-    let grid = lines_to_grid(&inputs);
+    let grid = lines_to_grid_number_val(&inputs);
     let result = compute_scenic_score(&grid, &Point{x: 2, y: 1});
 
     assert_eq!(result, 4);
@@ -239,7 +239,7 @@ mod tests {
   #[test]
   fn test_scenic_score_2() {
     let inputs = get_inputs();
-    let grid = lines_to_grid(&inputs);
+    let grid = lines_to_grid_number_val(&inputs);
     let result = compute_scenic_score(&grid, &Point{x: 2, y: 3});
 
     assert_eq!(result, 8);
