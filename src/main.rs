@@ -74,4 +74,9 @@ fn main() {
   println!("Day 12, part 1: Shortest path to summit: {}", solution_day12_part1);
   let solution_day12_part2 = day12::part_two();
   println!("Day 12, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day12_part2);
+
+  let solution_day13_part1 = day13::part_one();
+  println!("Day 13, part 1: Sum of InOrder indices: {}", solution_day13_part1);
+  let solution_day13_part2 = day13::part_two();
+  println!("Day 13, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day13_part2);
 }

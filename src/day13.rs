@@ -1,10 +1,12 @@
 use std::any::Any;
+use std::cmp::max;
 use std::collections::{HashMap, HashSet, VecDeque};
+
+use serde_json::{Number, Result, Value};
+
 use crate::day08::Point;
 use crate::day13::NestableItemType::{INT, VEC};
 use crate::utils::read_chunks;
-use serde_json::{Number, Result, Value};
-use crate::day13::CompareResult::NotImplemented;
 
 pub fn part_one() -> u64 {
   let chunks = read_chunks("day13.txt", "\n\n");
@@ -12,22 +14,31 @@ pub fn part_one() -> u64 {
 }
 
 fn solve_one(chunks: &Vec<String>) -> u64 {
-  let index_to_in_order: HashMap<usize, bool> = chunks
+  let index_to_in_order: HashMap<usize, CompareResult> = chunks
     .iter()
     .map(|c| c.split("\n").collect::<Vec<&str>>())
     .enumerate()
-    .map(|p| (p.0, is_in_order(&p.1)))
+    .map(|p| {
+      (
+        p.0,
+        is_in_order(
+          &serde_json::from_str(p.1[0]).unwrap(),
+          &serde_json::from_str(p.1[1]).unwrap(),
+        )
+      )
+    })
     .collect();
 
   let sum: usize = index_to_in_order
     .iter()
-    .filter(|p| (*p).1 == &true)
-    .map(|p| *p.0 + 1)
+    .filter(|p| (*p).1 == &CompareResult::InOrder)
+    .map(|p| *p.0 + 1)// Indexes are 1-based!!
     .sum();
 
   sum as u64
 }
 
+#[derive(PartialEq, Eq, Debug)]
 enum CompareResult {
   InOrder,
   NotInOrder,
@@ -36,26 +47,50 @@ enum CompareResult {
 
 fn is_in_order(left: &Value, right: &Value) -> CompareResult {
   match left {
-    Value::Number(n) => { handle_left_number(n, right); }
-    Value::Array(a) => { handle_left_array(a, right); }
+    Value::Number(n) => { return handle_left_number(n, right); }
+    Value::Array(a) => { return handle_left_array(a, right); }
     _ => panic!("Unexpected value type")
-  };
-
-  todo!()
+  }
 }
 
 fn handle_left_array(left_array: &Vec<Value>, right: &Value) -> CompareResult {
   match right {
-    Value::Number(n) => {handle_two_array(left_array, &vec![right.to_owned()])}
-    Value::Array(a) => {}
+    Value::Number(_) => { handle_two_array(left_array, &vec![right.to_owned()]) }
+    Value::Array(a) => { handle_two_array(left_array, a) }
     _ => panic!("Unexpected value type")
   }
 }
 
 fn handle_two_array(left_array: &Vec<Value>, right_array: &Vec<Value>) -> CompareResult {
-  let left_iter = left_array.iter();
-  let right_iter = right_array.iter();
-  
+  let max_len = max(left_array.len(), right_array.len());
+
+  for i in 0..max_len {
+    let next_left = left_array.get(i);
+    let next_right = right_array.get(i);
+
+    if next_left.is_none() && next_right.is_none() {
+      return CompareResult::Equal;
+    } else if next_left.is_none() && next_right.is_some() {
+      return CompareResult::InOrder;
+    } else if next_left.is_some() && next_right.is_none() {
+      return CompareResult::NotInOrder;
+    } else {
+      let left = next_left.unwrap();
+      let right = next_right.unwrap();
+
+      let result = match left {
+        Value::Number(n) => { handle_left_number(n, right) }
+        Value::Array(a) => { handle_left_array(a, right) }
+        _ => panic!("Unexpected value type")
+      };
+
+      if result != CompareResult::Equal {
+        return result;
+      }
+    }
+  }
+
+  return CompareResult::Equal;
 }
 
 fn handle_left_number(left_number: &Number, right: &Value) -> CompareResult {
@@ -73,73 +108,6 @@ fn handle_left_number(left_number: &Number, right: &Value) -> CompareResult {
     _ => panic!("Unexpected value type")
   }
 }
-
-fn is_in_order(pairs: &Vec<&str>) -> bool {
-  assert_eq!(pairs.len(), 2);
-  let left = pairs.get(0).unwrap();
-  let right = pairs.get(1).unwrap();
-
-  let left1: Value = serde_json::from_str(left).unwrap();
-match left1 {
-  Value::Number(_) => {}
-  Value::Array(xy) => {
-    let hi = xy.get(0);
-    let hi2 = 0;
-  }
-  _ => panic!("Unexpected input type")
-}
-  // let x = &left1[0];
-
-
-  // If both values are integers, the lower integer should come first.
-  // If the left integer is lower than the right integer, the inputs
-  // are in the right order. If the left integer is higher than
-  // the right integer, the inputs are not in the right order.
-  // Otherwise, the inputs are the same integer; continue checking the next part of the input.
-  if &left[0..1] != "[" && &right[0..1] != "[" {
-    if left[0..1] < right[0..1] {
-      return true;
-    } else if left[0..1] > right[0..1] {
-      return false;
-    } else {
-      // they're the same, continue
-    }
-  }
-  // If both values are lists, compare the first value of each list,
-  // then the second value, and so on. If the left list runs out of
-  // items first, the inputs are in the right order. If the right
-  // list runs out of items first, the inputs are not in the right
-  // order. If the lists are the same length and no comparison makes a
-  // decision about the order, continue checking the next part of the input.
-  if &left[0..1] == "[" && &right[0..1] == "[" {}
-  // If exactly one value is an integer, convert the integer to a list
-  // which contains that integer as its only value, then retry the comparison.
-  // For example, if comparing [0,0,0] and 2, convert the right value
-  // to [2] (a list containing 2); the result is then found by
-  // instead comparing [0,0,0] and [2].
-  false
-}
-
-// fn recursive_parse(input: &str) -> NestableItem {
-//   if &input[0..1] == "[" && &input[(input.len()-1)..input.len()] == "]" {
-//     if input.len() == 2 {
-//       return NestableItem {
-//         int: None,
-//         vec: Some(Vec::new()),
-//         item_type: VEC
-//       };
-//     }
-//     let nested_item = recursive_parse(&input[1..(input.len()-1)]);
-//     return NestableItem {
-//       int: None,
-//       vec: Some(Vec::from_iter(vec![nested_item])),
-//       item_type: NestableItemType::VEC,
-//     };
-//   };
-//
-//
-//   0
-// }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 enum NestableItemType {
@@ -197,69 +165,132 @@ fn lines_to_grid_char_val(lines: &Vec<String>) -> HashMap<Point, char> {
 
 #[cfg(test)]
 mod tests {
-  use crate::day13::is_in_order;
+  use std::result;
+  use crate::day13::{CompareResult, is_in_order, solve_one};
 
   #[test]
   fn test_pair_1() {
+    let left = serde_json::from_str("[1,1,3,1,1]").unwrap();
+    let right = serde_json::from_str("[1,1,5,1,1]").unwrap();
+
     assert_eq!(
-      is_in_order(&vec!["[1,1,3,1,1]", "[1,1,5,1,1]"]),
-      true
+      is_in_order(&left, &right),
+      CompareResult::InOrder
     );
   }
 
   #[test]
   fn test_pair_2() {
+    let left = serde_json::from_str("[[1],[2,3,4]]").unwrap();
+    let right = serde_json::from_str("[[1],4]").unwrap();
+
     assert_eq!(
-      is_in_order(&vec!["[[1],[2,3,4]]", "[[1],4]"]),
-      true
+      is_in_order(&left, &right),
+      CompareResult::InOrder
     );
   }
 
   #[test]
   fn test_pair_3() {
+    let left = serde_json::from_str("[9]").unwrap();
+    let right = serde_json::from_str("[[8,7,6]]").unwrap();
+
     assert_eq!(
-      is_in_order(&vec!["[9]", "[[8,7,6]]"]),
-      false
+      is_in_order(&left, &right),
+      CompareResult::NotInOrder
     );
   }
 
   #[test]
   fn test_pair_4() {
+    let left = serde_json::from_str("[[4,4],4,4]").unwrap();
+    let right = serde_json::from_str("[[4,4],4,4,4]").unwrap();
+
     assert_eq!(
-      is_in_order(&vec!["[[4,4],4,4]", "[[4,4],4,4,4]"]),
-      true
+      is_in_order(&left, &right),
+      CompareResult::InOrder
     );
   }
 
   #[test]
   fn test_pair_5() {
+    let left = serde_json::from_str("[7,7,7,7]").unwrap();
+    let right = serde_json::from_str("[7,7,7]").unwrap();
+
     assert_eq!(
-      is_in_order(&vec!["[7,7,7,7]", "[7,7,7]"]),
-      false
+      is_in_order(&left, &right),
+      CompareResult::NotInOrder
     );
   }
 
   #[test]
   fn test_pair_6() {
+    let left = serde_json::from_str("[]").unwrap();
+    let right = serde_json::from_str("[3]").unwrap();
+
     assert_eq!(
-      is_in_order(&vec!["[]", "[3]"]),
-      true
+      is_in_order(&left, &right),
+      CompareResult::InOrder
     );
   }
 
   #[test]
   fn test_pair_7() {
+    let left = serde_json::from_str("[[[]]]").unwrap();
+    let right = serde_json::from_str("[[]]").unwrap();
+
     assert_eq!(
-      is_in_order(&vec!["[[[]]]", "[[]]"]),
-      false
+      is_in_order(&left, &right),
+      CompareResult::NotInOrder
     );
   }
 
   #[test]
   fn test_pair_8() {
+    let left = serde_json::from_str("[1,[2,[3,[4,[5,6,7]]]],8,9]").unwrap();
+    let right = serde_json::from_str("[1,[2,[3,[4,[5,6,0]]]],8,9]").unwrap();
+
     assert_eq!(
-      is_in_order(&vec!["[1,[2,[3,[4,[5,6,7]]]],8,9]", "[1,[2,[3,[4,[5,6,0]]]],8,9]"]),
-      false
+      is_in_order(&left, &right),
+      CompareResult::NotInOrder
     );
+  }
+
+  #[test]
+  fn test_example_1() {
+    let chunks = get_input();
+    let result = solve_one(&chunks);
+    assert_eq!(result, 13);
+  }
+
+  fn get_input() -> Vec<String> {
+    let raw_input =
+      "[1,1,3,1,1]
+[1,1,5,1,1]
+
+[[1],[2,3,4]]
+[[1],4]
+
+[9]
+[[8,7,6]]
+
+[[4,4],4,4]
+[[4,4],4,4,4]
+
+[7,7,7,7]
+[7,7,7]
+
+[]
+[3]
+
+[[[]]]
+[[]]
+
+[1,[2,[3,[4,[5,6,7]]]],8,9]
+[1,[2,[3,[4,[5,6,0]]]],8,9]";
+
+    raw_input.split("\n\n")
+      .map(|l| l.to_string())
+      .collect::<Vec<String>>()
   }
 }
