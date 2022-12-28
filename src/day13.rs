@@ -1,11 +1,8 @@
-use std::any::Any;
-use std::cmp::max;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::cmp::{max, Ordering};
+use std::collections::HashMap;
 
-use serde_json::{Number, Result, Value};
+use serde_json::{Number, Value};
 
-use crate::day08::Point;
-use crate::day13::NestableItemType::{INT, VEC};
 use crate::utils::read_chunks;
 
 pub fn part_one() -> u64 {
@@ -13,15 +10,29 @@ pub fn part_one() -> u64 {
   solve_one(&chunks)
 }
 
+pub fn part_two() -> u64 {
+  let chunks = read_chunks("day13.txt", "\n\n");
+
+  let packets: Vec<String> = chunks
+    .iter()
+    .map(|c| c.split('\n'))
+    .flatten()
+    .map(|s| s.to_string())
+    .filter(|s| !s.is_empty())
+    .collect();
+
+  solve_two(&packets)
+}
+
 fn solve_one(chunks: &Vec<String>) -> u64 {
-  let index_to_in_order: HashMap<usize, CompareResult> = chunks
+  let index_to_in_order: HashMap<usize, Ordering> = chunks
     .iter()
     .map(|c| c.split("\n").collect::<Vec<&str>>())
     .enumerate()
     .map(|p| {
       (
         p.0,
-        is_in_order(
+        compare(
           &serde_json::from_str(p.1[0]).unwrap(),
           &serde_json::from_str(p.1[1]).unwrap(),
         )
@@ -31,21 +42,36 @@ fn solve_one(chunks: &Vec<String>) -> u64 {
 
   let sum: usize = index_to_in_order
     .iter()
-    .filter(|p| (*p).1 == &CompareResult::InOrder)
+    .filter(|p| (*p).1 == &Ordering::Less)
     .map(|p| *p.0 + 1)// Indexes are 1-based!!
     .sum();
 
   sum as u64
 }
 
-#[derive(PartialEq, Eq, Debug)]
-enum CompareResult {
-  InOrder,
-  NotInOrder,
-  Equal,
+fn solve_two(packets: &Vec<String>) -> u64 {
+  let divider_packets = vec!["[[2]]".to_string(), "[[6]]".to_string()];
+  let mut packets = packets.clone();
+  packets.extend(divider_packets.clone());
+  let mut parsed_packets: Vec<Value> = packets
+    .iter()
+    .map(|p| serde_json::from_str(p).unwrap())
+    .collect();
+
+  parsed_packets.sort_by(compare);
+
+  let product: usize = parsed_packets
+    .iter()
+    .map(|v| serde_json::to_string(v).unwrap())
+    .enumerate()
+    .filter(|p| divider_packets.contains(&(*p).1.to_owned()))
+    .map(|p| p.0 + 1)
+    .product();
+
+  product as u64
 }
 
-fn is_in_order(left: &Value, right: &Value) -> CompareResult {
+fn compare(left: &Value, right: &Value) -> Ordering {
   match left {
     Value::Number(n) => { return handle_left_number(n, right); }
     Value::Array(a) => { return handle_left_array(a, right); }
@@ -53,7 +79,7 @@ fn is_in_order(left: &Value, right: &Value) -> CompareResult {
   }
 }
 
-fn handle_left_array(left_array: &Vec<Value>, right: &Value) -> CompareResult {
+fn handle_left_array(left_array: &Vec<Value>, right: &Value) -> Ordering {
   match right {
     Value::Number(_) => { handle_two_array(left_array, &vec![right.to_owned()]) }
     Value::Array(a) => { handle_two_array(left_array, a) }
@@ -61,7 +87,7 @@ fn handle_left_array(left_array: &Vec<Value>, right: &Value) -> CompareResult {
   }
 }
 
-fn handle_two_array(left_array: &Vec<Value>, right_array: &Vec<Value>) -> CompareResult {
+fn handle_two_array(left_array: &Vec<Value>, right_array: &Vec<Value>) -> Ordering {
   let max_len = max(left_array.len(), right_array.len());
 
   for i in 0..max_len {
@@ -69,11 +95,11 @@ fn handle_two_array(left_array: &Vec<Value>, right_array: &Vec<Value>) -> Compar
     let next_right = right_array.get(i);
 
     if next_left.is_none() && next_right.is_none() {
-      return CompareResult::Equal;
+      return Ordering::Equal;
     } else if next_left.is_none() && next_right.is_some() {
-      return CompareResult::InOrder;
+      return Ordering::Less;
     } else if next_left.is_some() && next_right.is_none() {
-      return CompareResult::NotInOrder;
+      return Ordering::Greater;
     } else {
       let left = next_left.unwrap();
       let right = next_right.unwrap();
@@ -84,24 +110,24 @@ fn handle_two_array(left_array: &Vec<Value>, right_array: &Vec<Value>) -> Compar
         _ => panic!("Unexpected value type")
       };
 
-      if result != CompareResult::Equal {
+      if result != Ordering::Equal {
         return result;
       }
     }
   }
 
-  return CompareResult::Equal;
+  return Ordering::Equal;
 }
 
-fn handle_left_number(left_number: &Number, right: &Value) -> CompareResult {
+fn handle_left_number(left_number: &Number, right: &Value) -> Ordering {
   match right {
     Value::Number(n) => {
       if left_number.as_i64() < n.as_i64() {
-        CompareResult::InOrder
+        Ordering::Less
       } else if left_number.as_i64() > n.as_i64() {
-        CompareResult::NotInOrder
+        Ordering::Greater
       } else {
-        CompareResult::Equal
+        Ordering::Equal
       }
     }
     Value::Array(a) => { handle_two_array(&vec![Value::Number(left_number.to_owned())], a) }
@@ -109,64 +135,11 @@ fn handle_left_number(left_number: &Number, right: &Value) -> CompareResult {
   }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug)]
-enum NestableItemType {
-  INT,
-  VEC,
-}
-
-#[derive(Clone)]
-struct NestableItem {
-  int: Option<u64>,
-  vec: Option<Vec<NestableItem>>,
-  item_type: NestableItemType,
-}
-
-impl NestableItem {
-  fn get_item_type(self: &Self) -> NestableItemType {
-    self.item_type.to_owned()
-  }
-
-  fn get_int(self: &Self) -> u64 {
-    assert_eq!(self.item_type, INT);
-    self.int.expect("There should have been an int value here")
-  }
-
-  fn get_vec(self: &Self) -> Vec<NestableItem> {
-    assert_eq!(self.item_type, VEC);
-    self.vec.to_owned().expect("There should have been a vec value here")
-  }
-}
-
-pub fn part_two() -> u64 {
-  // let lines = read_chunks("day09.txt", "\n");
-  // solve_two(&lines)
-  0
-}
-
-fn lines_to_grid_char_val(lines: &Vec<String>) -> HashMap<Point, char> {
-  let mut grid = HashMap::new();
-
-  lines
-    .iter()
-    .enumerate()
-    .for_each(|(y, line)| {
-      line
-        .chars()
-        .enumerate()
-        .for_each(|(x, c)| {
-          grid.insert(Point { x: x as i64, y: y as i64 }, c);
-        })
-    });
-
-  grid
-}
-
-
 #[cfg(test)]
 mod tests {
-  use std::result;
-  use crate::day13::{CompareResult, is_in_order, solve_one};
+  use std::cmp::Ordering;
+
+  use crate::day13::{compare, solve_one, solve_two};
 
   #[test]
   fn test_pair_1() {
@@ -174,8 +147,8 @@ mod tests {
     let right = serde_json::from_str("[1,1,5,1,1]").unwrap();
 
     assert_eq!(
-      is_in_order(&left, &right),
-      CompareResult::InOrder
+      compare(&left, &right),
+      Ordering::Less
     );
   }
 
@@ -185,8 +158,8 @@ mod tests {
     let right = serde_json::from_str("[[1],4]").unwrap();
 
     assert_eq!(
-      is_in_order(&left, &right),
-      CompareResult::InOrder
+      compare(&left, &right),
+      Ordering::Less
     );
   }
 
@@ -196,8 +169,8 @@ mod tests {
     let right = serde_json::from_str("[[8,7,6]]").unwrap();
 
     assert_eq!(
-      is_in_order(&left, &right),
-      CompareResult::NotInOrder
+      compare(&left, &right),
+      Ordering::Greater
     );
   }
 
@@ -207,8 +180,8 @@ mod tests {
     let right = serde_json::from_str("[[4,4],4,4,4]").unwrap();
 
     assert_eq!(
-      is_in_order(&left, &right),
-      CompareResult::InOrder
+      compare(&left, &right),
+      Ordering::Less
     );
   }
 
@@ -218,8 +191,8 @@ mod tests {
     let right = serde_json::from_str("[7,7,7]").unwrap();
 
     assert_eq!(
-      is_in_order(&left, &right),
-      CompareResult::NotInOrder
+      compare(&left, &right),
+      Ordering::Greater
     );
   }
 
@@ -229,8 +202,8 @@ mod tests {
     let right = serde_json::from_str("[3]").unwrap();
 
     assert_eq!(
-      is_in_order(&left, &right),
-      CompareResult::InOrder
+      compare(&left, &right),
+      Ordering::Less
     );
   }
 
@@ -240,8 +213,8 @@ mod tests {
     let right = serde_json::from_str("[[]]").unwrap();
 
     assert_eq!(
-      is_in_order(&left, &right),
-      CompareResult::NotInOrder
+      compare(&left, &right),
+      Ordering::Greater
     );
   }
 
@@ -251,19 +224,26 @@ mod tests {
     let right = serde_json::from_str("[1,[2,[3,[4,[5,6,0]]]],8,9]").unwrap();
 
     assert_eq!(
-      is_in_order(&left, &right),
-      CompareResult::NotInOrder
+      compare(&left, &right),
+      Ordering::Greater
     );
   }
 
   #[test]
   fn test_example_1() {
-    let chunks = get_input();
+    let chunks = get_input_as_chunks();
     let result = solve_one(&chunks);
     assert_eq!(result, 13);
   }
 
-  fn get_input() -> Vec<String> {
+  #[test]
+  fn test_example_2() {
+    let all_packets = get_input_all_individual_packets();
+    let result = solve_two(&all_packets);
+    assert_eq!(result, 140);
+  }
+
+  fn get_input_as_chunks() -> Vec<String> {
     let raw_input =
       "[1,1,3,1,1]
 [1,1,5,1,1]
@@ -292,5 +272,14 @@ mod tests {
     raw_input.split("\n\n")
       .map(|l| l.to_string())
       .collect::<Vec<String>>()
+  }
+
+  fn get_input_all_individual_packets() -> Vec<String> {
+    get_input_as_chunks()
+      .iter()
+      .map(|c| c.split('\n'))
+      .flatten()
+      .map(|s| s.to_string())
+      .collect()
   }
 }

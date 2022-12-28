@@ -78,5 +78,5 @@ fn main() {
   let solution_day13_part1 = day13::part_one();
   println!("Day 13, part 1: Sum of InOrder indices: {}", solution_day13_part1);
   let solution_day13_part2 = day13::part_two();
-  println!("Day 13, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day13_part2);
+  println!("Day 13, part 2: Product of divider packet indices: {}", solution_day13_part2);
 }
