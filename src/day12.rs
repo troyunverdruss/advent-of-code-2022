@@ -15,11 +15,10 @@ pub fn part_one() -> u64 {
 pub fn part_two() -> u64 {
   let lines = read_chunks("day12.txt", "\n");
   let grid = lines_to_grid_char_val(&lines);
-  let start = find_point_for_value(&grid, 'S');
   let dest = find_point_for_value(&grid, 'E');
   let grid = convert_grid_values_to_numeric(&grid);
 
-  solve_two(&grid, &start, &dest)
+  solve_two(&grid, &dest)
 }
 
 fn solve_one(grid: &HashMap<Point, u64>, start: &Point, dest: &Point) -> u64 {
@@ -66,7 +65,7 @@ fn solve_one(grid: &HashMap<Point, u64>, start: &Point, dest: &Point) -> u64 {
   (grid.len() + 1) as u64
 }
 
-fn solve_two(grid: &HashMap<Point, u64>, start: &Point, dest: &Point) -> u64 {
+fn solve_two(grid: &HashMap<Point, u64>, dest: &Point) -> u64 {
   grid
     .iter()
     .filter(|kv| *(*kv).1 == 1)
@@ -180,7 +179,7 @@ mod tests {
     let dest = find_point_for_value(&grid, 'E');
     let grid = convert_grid_values_to_numeric(&grid);
 
-    let result = solve_two(&grid, &start, &dest);
+    let result = solve_two(&grid, &dest);
     assert_eq!(result, 29);
   }
 
