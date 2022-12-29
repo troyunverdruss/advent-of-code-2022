@@ -62,8 +62,7 @@ fn main() {
 
   let solution_day10_part1 = day10::part_one();
   println!("Day 10, part 1: Sum of interesting signal strengths: {}", solution_day10_part1);
-  let solution_day10_part2 = day10::part_two();
-  println!("Day 10, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day10_part2);
+  println!("Day 10, part 2: See above printout and read the 8 letters");
 
   let solution_day11_part1 = day11::part_one();
   println!("Day 11, part 1: Product of most items passed over 20 rounds: {}", solution_day11_part1);
