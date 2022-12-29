@@ -1,32 +1,31 @@
-use std::collections::{HashMap, HashSet};
-use crate::day08::Point;
+use std::collections::{HashSet};
+
 use crate::utils::read_chunks;
 
-pub fn part_one() -> i64 {
+pub fn part_one() -> u64 {
   let lines = read_chunks("day11.txt", "Monkey");
-  solve_one(&lines)
+  solve_one(&lines, 20, 3)
 }
 
 pub fn part_two() -> u64 {
-  // let lines = read_chunks("day09.txt", "\n");
-  // solve_two(&lines)
-  0
+  let lines = read_chunks("day11.txt", "Monkey");
+  solve_one(&lines, 10000, 1)
 }
 
 
 #[derive(Clone)]
 struct Monkey {
   name: String,
-  items: Vec<i64>,
+  items: Vec<u64>,
   operator: String,
   operand: String,
-  test_divisible_by: i64,
-  dest_if_true: i64,
-  dest_if_false: i64,
+  test_divisible_by: u64,
+  dest_if_true: u64,
+  dest_if_false: u64,
 }
 
 impl Monkey {
-  fn clone_new_items(self: &Self, new_items: &Vec<i64>) -> Monkey {
+  fn clone_new_items(self: &Self, new_items: &Vec<u64>) -> Monkey {
     Monkey {
       name: self.name.to_string(),
       items: new_items.clone(),
@@ -37,16 +36,15 @@ impl Monkey {
       dest_if_false: self.dest_if_false.clone(),
     }
   }
-
 }
 
-fn solve_one(groups: &Vec<String>) -> i64 {
+fn solve_one(groups: &Vec<String>, rounds: u64, worry_divisor: u64) -> u64 {
   let mut monkeys: Vec<Monkey> = groups
     .iter()
     .map(|g| {
       let lines = g.split("\n").collect::<Vec<&str>>();
       let name = lines.get(0).unwrap().to_string();
-      let items: Vec<i64> = lines
+      let items: Vec<u64> = lines
         .get(1).unwrap()
         .split(':')
         .filter(|s| !s.is_empty())
@@ -101,7 +99,7 @@ fn solve_one(groups: &Vec<String>) -> i64 {
         operand,
         test_divisible_by,
         dest_if_true,
-        dest_if_false
+        dest_if_false,
       }
     })
     .collect();
@@ -111,7 +109,17 @@ fn solve_one(groups: &Vec<String>) -> i64 {
     inspections.push(0);
   }
 
-  for round in 0..20 {
+  // For part 2 our numbers are going to grow tremendously fast so we need to
+  // hold them down in a way that we didn't for part 1. Calculate the product of
+  // all the divisors (which happen to be prime!) and use that as a mod for the
+  // item worry values
+  let bounding_mod_value: u64 = monkeys
+    .iter()
+    .map(|m| m.test_divisible_by)
+    .product();
+
+
+  for round in 0..rounds {
     for curr_monkey_id in 0..monkeys.len() {
       let curr_monkey = monkeys.get(curr_monkey_id).unwrap().clone();
       for item in &curr_monkey.items {
@@ -119,14 +127,17 @@ fn solve_one(groups: &Vec<String>) -> i64 {
         let worry_operand = if curr_monkey.operand == "old" {
           item.to_owned()
         } else {
-          curr_monkey.operand.parse::<i64>().unwrap()
+          curr_monkey.operand.parse::<u64>().unwrap()
         };
         let interim_worry_value = if curr_monkey.operator == "+" {
           item + worry_operand
         } else {
           item * worry_operand
         };
-        let worry_operand = interim_worry_value / 3;
+
+        // Divide by the amount your worry goes down
+        // part 1 this should be 3, part 2 it's 1 (ie: your worry doesn't reduce)
+        let worry_operand = interim_worry_value / worry_divisor;
 
         let mut updated_dest_monkey;
         let mut dest_monkey_id;
@@ -134,13 +145,13 @@ fn solve_one(groups: &Vec<String>) -> i64 {
           dest_monkey_id = curr_monkey.dest_if_true as usize;
           let dest_monkey = monkeys.get(dest_monkey_id).unwrap().clone();
           let mut new_items = dest_monkey.items.clone();
-          new_items.push(worry_operand);
+          new_items.push(worry_operand % bounding_mod_value);
           updated_dest_monkey = dest_monkey.clone_new_items(&new_items);
         } else {
           dest_monkey_id = curr_monkey.dest_if_false as usize;
           let dest_monkey = monkeys.get(dest_monkey_id).unwrap().clone();
           let mut new_items = dest_monkey.items.clone();
-          new_items.push(worry_operand);
+          new_items.push(worry_operand % bounding_mod_value);
           updated_dest_monkey = dest_monkey.clone_new_items(&new_items);
         }
         monkeys[dest_monkey_id] = updated_dest_monkey;
@@ -160,8 +171,15 @@ mod tests {
   #[test]
   fn test_sample_1() {
     let inputs = get_inputs();
-    let result = solve_one(&inputs);
+    let result = solve_one(&inputs, 20, 3);
     assert_eq!(result, 10605);
+  }
+
+  #[test]
+  fn test_sample_2() {
+    let inputs = get_inputs();
+    let result = solve_one(&inputs, 10000, 1);
+    assert_eq!(result, 2713310158);
   }
 
   fn get_inputs() -> Vec<String> {

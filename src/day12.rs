@@ -12,6 +12,16 @@ pub fn part_one() -> u64 {
   solve_one(&grid, &start, &dest)
 }
 
+pub fn part_two() -> u64 {
+  let lines = read_chunks("day12.txt", "\n");
+  let grid = lines_to_grid_char_val(&lines);
+  let start = find_point_for_value(&grid, 'S');
+  let dest = find_point_for_value(&grid, 'E');
+  let grid = convert_grid_values_to_numeric(&grid);
+
+  solve_two(&grid, &start, &dest)
+}
+
 fn solve_one(grid: &HashMap<Point, u64>, start: &Point, dest: &Point) -> u64 {
   let neighbors = vec![
     Point { x: 1, y: 0 },
@@ -51,10 +61,19 @@ fn solve_one(grid: &HashMap<Point, u64>, start: &Point, dest: &Point) -> u64 {
     }
   }
 
-  panic!("Should have found a path, but couldn't")
+  // Failsafe here for part 2 to be longer than any possible route could be in
+  // case there's a start that isn't "solvable" without doubling back over the path
+  (grid.len() + 1) as u64
 }
 
-struct Node {}
+fn solve_two(grid: &HashMap<Point, u64>, start: &Point, dest: &Point) -> u64 {
+  grid
+    .iter()
+    .filter(|kv| *(*kv).1 == 1)
+    .map(|kv| solve_one(grid, kv.0, dest))
+    .min()
+    .expect("Really should have found at least one path!")
+}
 
 fn move_allowed(grid: &HashMap<Point, u64>, point_at: &Point, point_next: &Point) -> bool {
   if !grid.contains_key(point_next) {
@@ -92,11 +111,7 @@ fn find_point_for_value(grid: &HashMap<Point, char>, target: char) -> Point {
     .clone()
 }
 
-pub fn part_two() -> u64 {
-  // let lines = read_chunks("day09.txt", "\n");
-  // solve_two(&lines)
-  0
-}
+
 
 fn lines_to_grid_char_val(lines: &Vec<String>) -> HashMap<Point, char> {
   let mut grid = HashMap::new();
@@ -120,7 +135,7 @@ fn lines_to_grid_char_val(lines: &Vec<String>) -> HashMap<Point, char> {
 #[cfg(test)]
 mod tests {
   use crate::day08::Point;
-  use crate::day12::{convert_grid_values_to_numeric, find_point_for_value, lines_to_grid_char_val, move_allowed, score_for_letter, solve_one};
+  use crate::day12::{convert_grid_values_to_numeric, find_point_for_value, lines_to_grid_char_val, move_allowed, score_for_letter, solve_one, solve_two};
 
   #[test]
   fn test_scoring_for_grid() {
@@ -155,6 +170,18 @@ mod tests {
 
     let result = solve_one(&grid, &start, &dest);
     assert_eq!(result, 31);
+  }
+
+  #[test]
+  fn test_sample_2() {
+    let lines = get_input();
+    let grid = lines_to_grid_char_val(&lines);
+    let start = find_point_for_value(&grid, 'S');
+    let dest = find_point_for_value(&grid, 'E');
+    let grid = convert_grid_values_to_numeric(&grid);
+
+    let result = solve_two(&grid, &start, &dest);
+    assert_eq!(result, 29);
   }
 
   fn get_input() -> Vec<String> {
