@@ -66,17 +66,17 @@ fn main() {
   println!("Day 10, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day10_part2);
 
   let solution_day11_part1 = day11::part_one();
-  println!("Day 11, part 1: Product of most items passed: {}", solution_day11_part1);
+  println!("Day 11, part 1: Product of most items passed over 20 rounds: {}", solution_day11_part1);
   let solution_day11_part2 = day11::part_two();
-  println!("Day 11, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day11_part2);
+  println!("Day 11, part 2: Product of most items passed over 10000 rounds: {}", solution_day11_part2);
 
   let solution_day12_part1 = day12::part_one();
   println!("Day 12, part 1: Shortest path to summit: {}", solution_day12_part1);
   let solution_day12_part2 = day12::part_two();
-  println!("Day 12, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day12_part2);
+  println!("Day 12, part 2: Shortest possible path from any start: {}", solution_day12_part2);
 
   let solution_day13_part1 = day13::part_one();
-  println!("Day 13, part 1: Sum of InOrder indices: {}", solution_day13_part1);
+  println!("Day 13, part 1: Sum of already sorted indices: {}", solution_day13_part1);
   let solution_day13_part2 = day13::part_two();
   println!("Day 13, part 2: Product of divider packet indices: {}", solution_day13_part2);
 }
