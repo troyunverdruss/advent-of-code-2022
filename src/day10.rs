@@ -17,31 +17,106 @@ fn solve_one(lines: &Vec<String>) -> i64 {
   let mut x_register = 1;
   let mut cycle = 1;
 
+  // Init my crt
+  let mut crt: Vec<char> = Vec::with_capacity(240);
+  for i in 0..240 {
+    crt.insert(i, '-');
+  }
+
   let key_cycles = vec![20, 60, 100, 140, 180, 220];
   let mut key_values: Vec<i64> = Vec::new();
 
-  let line_len = lines.len();
   for line in lines {
     if line.contains("noop") {
       // do nothing
+      record_lit_pixel(&cycle, &mut crt, &x_register);
       cycle += 1;
     } else {
       let parts: Vec<String> = line.split(' ').map(|p| p.to_string()).collect();
       let value: i64 = parts.get(1).unwrap().parse().unwrap();
+
+      record_lit_pixel(&cycle, &mut crt, &x_register);
       cycle += 1;
-      if key_cycles.contains(&cycle) {
-        key_values.push(cycle * x_register.clone());
-      }
+      record_key_value(&cycle, &key_cycles, &mut key_values, &x_register);
+
+      record_lit_pixel(&cycle, &mut crt, &x_register);
+      cycle += 1;
+
       x_register += value;
-      cycle += 1;
     }
-    if key_cycles.contains(&cycle) {
-      key_values.push(cycle * x_register.clone());
+    record_key_value(&cycle, &key_cycles, &mut key_values, &x_register);
+  }
+
+  for y in 0..6 {
+    print!("|");
+    for x in 0..40 {
+      let c = crt.get(y * 40 + x).unwrap();
+      print!("{} ", c);
     }
+    println!("|");
   }
 
   key_values.iter().sum()
 }
+
+fn record_lit_pixel(cycle: &i64, crt: &mut Vec<char>, x_register: &i64) {
+  // println!("cycle: {}, reg: {}", cycle, x_register);
+
+  // Cycles are 1 based, but pixels are not, so adjust the cycle back 1
+  let cycle = cycle - 1;
+
+  // if cycle == 40 {
+  //   let x = 0;
+  // }
+  //
+  // let _crt = crt.clone();
+  // let _c = cycle;
+  // let _x = *x_register;
+
+
+  let mut pixel_lit = false;
+
+  let test_x_register = x_register - 1;
+  if test_x_register == cycle % 40 {
+    // println!("  drawing at {}", cycle);
+    crt[cycle as usize] = '#';
+    pixel_lit = true;
+  }
+
+  let test_x_register = x_register - 0;
+  if test_x_register == cycle %40 {
+    // println!("  drawing at {}", cycle);
+    crt[cycle as usize] = '#';
+    pixel_lit = true;
+  }
+
+  let test_x_register = x_register + 1;
+  if test_x_register == cycle%40 {
+    // println!("  drawing at {}", cycle);
+    crt[cycle as usize] = '#';
+    pixel_lit = true;
+  }
+
+  if !pixel_lit {
+    crt[cycle as usize] = ' ';
+  }
+
+  // for i in 0..40 {
+  //   print!("{}", crt.get(i).unwrap());
+  // }
+  // println!();
+  // for i in 40..80 {
+  //   print!("{}", crt.get(i).unwrap());
+  // }
+  // println!();
+}
+
+fn record_key_value(cycle: &i64, key_cycles: &Vec<i64>, key_values: &mut Vec<i64>, x_register: &i64) {
+  if key_cycles.contains(cycle) {
+    key_values.push(cycle * x_register.clone());
+  }
+}
+
 
 #[cfg(test)]
 mod tests {
