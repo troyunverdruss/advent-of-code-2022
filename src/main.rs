@@ -80,8 +80,9 @@ fn main() {
   let solution_day13_part2 = day13::part_two();
   println!("Day 13, part 2: Product of divider packet indices: {}", solution_day13_part2);
 
-  let solution_day14_part1 = day14::part_one();
-  println!("Day 14, part 1: Total number of settled sand grains: {}", solution_day14_part1);
-  let solution_day14_part2 = day14::part_two();
-  println!("Day 14, part 2: Product of divider packet indices: {}", solution_day14_part2);
+  // let solution_day14_part1 = day14::part_one();
+  // println!("Day 14, part 1: Total number of settled sand grains with abyss: {}", solution_day14_part1);
+  // let solution_day14_part2 = day14::part_two();
+  // println!("Day 14, part 2: Total number of settled sand grains with infinite floor: {}", solution_day14_part2);
+  println!("Day 14 is slow, uncomment to see results");
 }

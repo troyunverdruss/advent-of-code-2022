@@ -4,14 +4,18 @@ use crate::day08::Point;
 
 use crate::utils::read_chunks;
 
+#[allow(dead_code)]
 pub fn part_one() -> u64 {
   let lines = read_chunks("day14.txt", "\n");
   let grid = parse_input(&lines);
-  simulate(&grid)
+  simulate_with_abyss(&grid)
 }
 
+#[allow(dead_code)]
 pub fn part_two() -> u64 {
-  0
+  let lines = read_chunks("day14.txt", "\n");
+  let grid = parse_input(&lines);
+  simulate_with_infinite_floor(&grid)
 }
 
 fn parse_input(lines: &Vec<String>) -> HashMap<Point, char> {
@@ -73,8 +77,7 @@ fn str_to_point(str_point: &String) -> Point {
   }
 }
 
-
-fn simulate(grid: &HashMap<Point, char>) -> u64 {
+fn simulate_with_abyss(grid: &HashMap<Point, char>) -> u64 {
   let mut grid = grid.clone();
 
   while add_sand_grain(&mut grid) {
@@ -86,6 +89,30 @@ fn simulate(grid: &HashMap<Point, char>) -> u64 {
     .filter(|v| **v == 'o')
     .count();
 
+  // print_grid(&grid);
+  sand_count as u64
+}
+
+fn simulate_with_infinite_floor(grid: &HashMap<Point, char>) -> u64 {
+  let mut grid = grid.clone();
+  let floor_y = grid.keys().map(|k| k.y).max().unwrap() + 2;
+
+  while add_sand_grain(&mut grid) {
+    // Update the floor
+    let min_x = grid.keys().filter(|p| p.y != floor_y).map(|k| k.x).min().unwrap() -5;
+    let max_x = grid.keys().filter(|p| p.y != floor_y).map(|k| k.x).max().unwrap() + 5;
+
+    for x in min_x..=max_x {
+      grid.insert(Point { x, y: floor_y }, '#');
+    }
+  }
+
+  let sand_count: usize = grid
+    .values()
+    .filter(|v| **v == 'o')
+    .count();
+
+  // print_grid(&grid);
   sand_count as u64
 }
 
@@ -99,6 +126,11 @@ fn add_sand_grain(grid: &mut HashMap<Point, char>) -> bool {
   loop {
     // Failsafe in case we fall off the bottom
     if position.y > max_y {
+      return false;
+    }
+
+    // Failsafe for once we're blocked at the entrance
+    if *grid.get(&position).unwrap_or(&'.') == 'o' {
       return false;
     }
 
@@ -131,6 +163,7 @@ fn add_sand_grain(grid: &mut HashMap<Point, char>) -> bool {
   true
 }
 
+#[allow(dead_code)]
 fn print_grid(grid: &HashMap<Point, char>) {
   let min_x = grid.keys().map(|k| k.x).min().unwrap() - 1;
   let max_x = grid.keys().map(|k| k.x).max().unwrap() + 1;
@@ -148,14 +181,22 @@ fn print_grid(grid: &HashMap<Point, char>) {
 
 #[cfg(test)]
 mod tests {
-  use crate::day14::{parse_input, print_grid, simulate};
+  use crate::day14::{parse_input, print_grid, simulate_with_abyss, simulate_with_infinite_floor};
 
   #[test]
   fn test_part_1() {
     let input = get_input();
     let grid = parse_input(&input);
     print_grid(&grid);
-    assert_eq!(simulate(&grid), 24);
+    assert_eq!(simulate_with_abyss(&grid), 24);
+  }
+
+  #[test]
+  fn test_part_2() {
+    let input = get_input();
+    let grid = parse_input(&input);
+    print_grid(&grid);
+    assert_eq!(simulate_with_infinite_floor(&grid), 93);
   }
 
   fn get_input() -> Vec<String> {
