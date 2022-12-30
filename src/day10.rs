@@ -1,16 +1,9 @@
-use std::collections::{HashMap, HashSet};
-use crate::day08::Point;
 use crate::utils::read_chunks;
 
 pub fn part_one() -> i64 {
   let lines = read_chunks("day10.txt", "\n");
   solve_one(&lines)
-}
-
-pub fn part_two() -> u64 {
-  // let lines = read_chunks("day09.txt", "\n");
-  // solve_two(&lines)
-  0
+  // PART 2 prints out automatically since it's basically the same code
 }
 
 fn solve_one(lines: &Vec<String>) -> i64 {

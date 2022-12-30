@@ -1,4 +1,3 @@
-use std::collections::{HashSet};
 
 use crate::utils::read_chunks;
 
@@ -105,7 +104,7 @@ fn solve_one(groups: &Vec<String>, rounds: u64, worry_divisor: u64) -> u64 {
     .collect();
 
   let mut inspections = vec![];
-  for i in 0..monkeys.len() {
+  for _ in 0..monkeys.len() {
     inspections.push(0);
   }
 
@@ -119,7 +118,7 @@ fn solve_one(groups: &Vec<String>, rounds: u64, worry_divisor: u64) -> u64 {
     .product();
 
 
-  for round in 0..rounds {
+  for _round in 0..rounds {
     for curr_monkey_id in 0..monkeys.len() {
       let curr_monkey = monkeys.get(curr_monkey_id).unwrap().clone();
       for item in &curr_monkey.items {
@@ -139,8 +138,8 @@ fn solve_one(groups: &Vec<String>, rounds: u64, worry_divisor: u64) -> u64 {
         // part 1 this should be 3, part 2 it's 1 (ie: your worry doesn't reduce)
         let worry_operand = interim_worry_value / worry_divisor;
 
-        let mut updated_dest_monkey;
-        let mut dest_monkey_id;
+        let updated_dest_monkey;
+        let dest_monkey_id;
         if worry_operand % curr_monkey.test_divisible_by == 0 {
           dest_monkey_id = curr_monkey.dest_if_true as usize;
           let dest_monkey = monkeys.get(dest_monkey_id).unwrap().clone();

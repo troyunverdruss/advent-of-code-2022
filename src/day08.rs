@@ -2,16 +2,19 @@ use std::collections::{HashMap};
 use std::ops::Add;
 use crate::utils::read_chunks;
 
+#[allow(dead_code)]
 pub fn part_one() -> u64 {
   let lines = read_chunks("day08.txt", "\n");
   solve_one(&lines)
 }
 
+#[allow(dead_code)]
 pub fn part_two() -> u64 {
   let lines = read_chunks("day08.txt", "\n");
   solve_two(&lines)
 }
 
+#[allow(dead_code)]
 fn lines_to_grid_number_val(lines: &Vec<String>) -> HashMap<Point, u64> {
   let mut grid = HashMap::new();
 
@@ -45,6 +48,7 @@ impl Add for Point {
   }
 }
 
+#[allow(dead_code)]
 fn solve_one(lines: &Vec<String>) -> u64 {
   let grid = lines_to_grid_number_val(&lines);
 
@@ -53,6 +57,7 @@ fn solve_one(lines: &Vec<String>) -> u64 {
     .count() as u64
 }
 
+#[allow(dead_code)]
 fn is_visible(grid: &HashMap<Point, u64>, loc: &Point, height: &u64) -> bool {
   let higher_trees_left = grid
     .iter()
@@ -74,6 +79,7 @@ fn is_visible(grid: &HashMap<Point, u64>, loc: &Point, height: &u64) -> bool {
   higher_trees_left == 0 || higher_trees_right == 0 || higher_trees_up == 0 || higher_trees_down == 0
 }
 
+#[allow(dead_code)]
 fn get_visible_locations(grid: &HashMap<Point, u64>) -> Vec<Point> {
   grid
     .iter()
@@ -86,6 +92,7 @@ fn get_visible_locations(grid: &HashMap<Point, u64>) -> Vec<Point> {
     .collect()
 }
 
+#[allow(dead_code)]
 fn solve_two(lines: &Vec<String>) -> u64 {
   let grid = lines_to_grid_number_val(&lines);
   grid
@@ -95,6 +102,7 @@ fn solve_two(lines: &Vec<String>) -> u64 {
     .unwrap()
 }
 
+#[allow(dead_code)]
 fn compute_scenic_score(grid: &HashMap<Point, u64>, location: &Point) -> u64 {
   let min_x = 0;
   let min_y = 0;
