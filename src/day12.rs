@@ -175,7 +175,6 @@ mod tests {
   fn test_sample_2() {
     let lines = get_input();
     let grid = lines_to_grid_char_val(&lines);
-    let start = find_point_for_value(&grid, 'S');
     let dest = find_point_for_value(&grid, 'E');
     let grid = convert_grid_values_to_numeric(&grid);
 

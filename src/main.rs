@@ -12,6 +12,7 @@ mod day10;
 mod day11;
 mod day12;
 mod day13;
+mod day14;
 
 fn main() {
   let solution_day01_part1 = day01::part_one();
@@ -78,4 +79,9 @@ fn main() {
   println!("Day 13, part 1: Sum of already sorted indices: {}", solution_day13_part1);
   let solution_day13_part2 = day13::part_two();
   println!("Day 13, part 2: Product of divider packet indices: {}", solution_day13_part2);
+
+  let solution_day14_part1 = day14::part_one();
+  println!("Day 14, part 1: Total number of settled sand grains: {}", solution_day14_part1);
+  let solution_day14_part2 = day14::part_two();
+  println!("Day 14, part 2: Product of divider packet indices: {}", solution_day14_part2);
 }

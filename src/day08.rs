@@ -164,7 +164,6 @@ fn compute_scenic_score(grid: &HashMap<Point, u64>, location: &Point) -> u64 {
 
 #[cfg(test)]
 mod tests {
-  use std::collections::HashSet;
   use crate::day08::{compute_scenic_score, get_visible_locations, lines_to_grid_number_val, Point, solve_one, solve_two};
 
   #[test]
@@ -205,18 +204,12 @@ mod tests {
     let grid = lines_to_grid_number_val(&inputs);
     let visible = get_visible_locations(&grid);
 
-    let visible_hs: HashSet<Point> = HashSet::from_iter(visible.clone());
-    let x = 0;
-
     assert_eq!(visible.iter().filter(|p| p.y == 0).count(), 5);
 
-    let row_2: Vec<Point> = visible.iter().filter(|p| p.y == 1).map(|p| p.clone()).collect();
     assert_eq!(visible.iter().filter(|p| p.y == 1).count(), 4);
 
-    let row_3: Vec<Point> = visible.iter().filter(|p| p.y == 2).map(|p| p.clone()).collect();
     assert_eq!(visible.iter().filter(|p| p.y == 2).count(), 4);
 
-    let row_4: Vec<Point> = visible.iter().filter(|p| p.y == 4).map(|p| p.clone()).collect();
     assert_eq!(visible.iter().filter(|p| p.y == 3).count(), 3);
 
     assert_eq!(visible.iter().filter(|p| p.y == 4).count(), 5);
