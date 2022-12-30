@@ -58,7 +58,7 @@ fn main() {
   let solution_day09_part1 = day09::part_one();
   println!("Day 9, part 1: Locations that the tail has visited: {}", solution_day09_part1);
   let solution_day09_part2 = day09::part_two();
-  println!("Day 9, part 2: ------- DONT KNOW QUESTION YET -------: {}", solution_day09_part2);
+  println!("Day 9, part 2: Locations that the tail has visited: {}", solution_day09_part2);
 
   let solution_day10_part1 = day10::part_one();
   println!("Day 10, part 1: Sum of interesting signal strengths: {}", solution_day10_part1);
