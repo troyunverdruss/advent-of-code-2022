@@ -13,6 +13,7 @@ mod day11;
 mod day12;
 mod day13;
 mod day14;
+mod day15;
 
 fn main() {
   let solution_day01_part1 = day01::part_one();
@@ -85,4 +86,9 @@ fn main() {
   // let solution_day14_part2 = day14::part_two();
   // println!("Day 14, part 2: Total number of settled sand grains with infinite floor: {}", solution_day14_part2);
   println!("Day 14 is slow, uncomment to see results");
+
+  let solution_day15_part1 = day15::part_one();
+  println!("Day 15, part 1: Invalid locations in row 2000000: {}", solution_day15_part1);
+  let solution_day15_part2 = day15::part_two();
+  println!("Day 15, part 2: Tuning frequency of missing beacon: {}", solution_day15_part2);
 }

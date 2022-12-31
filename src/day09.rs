@@ -93,7 +93,7 @@ fn solve_one(lines: &Vec<String>, knot_count: u64) -> u64 {
   visited.iter().count() as u64
 }
 
-fn distance(a: Point, b: Point) -> i64 {
+pub fn distance(a: Point, b: Point) -> i64 {
   (a.x - b.x).abs() + (a.y - b.y).abs()
 }
 
