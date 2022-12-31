@@ -1,10 +1,7 @@
 use std::collections::HashMap;
-use std::str::Split;
 
 use crate::day08::Point;
 use crate::day09::distance;
-use crate::day14::print_grid;
-
 use crate::utils::read_chunks;
 
 pub fn part_one() -> u64 {
@@ -34,7 +31,6 @@ fn parse_input(lines: &Vec<String>) -> Vec<InputPair> {
 }
 
 fn parts_to_input_pair(parts: &Vec<String>) -> InputPair {
-  let x = 0;
   InputPair {
     sensor: Point {
       x: parts.get(3).unwrap().parse().unwrap(),
@@ -62,7 +58,7 @@ fn solve_one(lines: &Vec<String>, target_row: i64) -> u64 {
     .for_each(|ip| {
       // let dbg_target = Point { x: 8, y: 7 };
       // if ip.sensor == dbg_target {
-              update_target_row(ip, &mut grid_row, target_row);
+      update_target_row(ip, &mut grid_row, target_row);
       // }
     });
 
@@ -73,7 +69,6 @@ fn solve_one(lines: &Vec<String>, target_row: i64) -> u64 {
     .count();
 
   // dbg_print_grid(&grid_row);
-  let x = 0;
   count as u64
 }
 
