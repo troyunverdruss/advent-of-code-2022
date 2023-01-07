@@ -14,6 +14,7 @@ mod day12;
 mod day13;
 mod day14;
 mod day15;
+mod day16;
 
 fn main() {
   let solution_day01_part1 = day01::part_one();
@@ -91,4 +92,9 @@ fn main() {
   println!("Day 15, part 1: Invalid locations in row 2000000: {}", solution_day15_part1);
   let solution_day15_part2 = day15::part_two();
   println!("Day 15, part 2: Tuning frequency of missing beacon: {}", solution_day15_part2);
+
+  let solution_day16_part1 = day16::part_one();
+  println!("Day 16, part 1: Invalid locations in row 2000000: {}", solution_day16_part1);
+  let solution_day16_part2 = day16::part_two();
+  println!("Day 16, part 2: Tuning frequency of missing beacon: {}", solution_day16_part2);
 }
