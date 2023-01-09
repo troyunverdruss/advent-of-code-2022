@@ -1,5 +1,5 @@
 use std::borrow::BorrowMut;
-use std::cmp::max;
+use std::cmp::{max, Ordering};
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use memoize::memoize;
@@ -10,6 +10,7 @@ use crate::day09::distance;
 use crate::utils::read_chunks;
 use std::cell::RefCell;
 use std::cmp::Ordering::{Equal, Greater, Less};
+use std::io::SeekFrom::Start;
 
 
 thread_local!(static VALVES: RefCell<Vec<Valve>> = {
@@ -22,6 +23,10 @@ thread_local!(static VALVE_LOOKUP: RefCell<HashMap<String, Valve>> = {
 });
 thread_local!(static VALVES_WITH_NON_ZERO_FLOW_RATE: RefCell<HashSet<String>> = {
     let mut cache = HashSet::new();
+    RefCell::new(cache)
+});
+thread_local!(static MEMO_2: RefCell<HashMap<String, i64>> = {
+    let mut cache = HashMap::new();
     RefCell::new(cache)
 });
 
@@ -114,9 +119,20 @@ impl MemoKey {
   }
 }
 
-#[memoize]
-fn test(a: String) -> i64 {
-  0
+fn sort_valves(opened_valves_set: &HashSet<String>, v1: &Valve, v2: &Valve) -> Ordering {
+  if v1.flow_rate == 0 && v2.flow_rate > 0 {
+    Greater
+  } else if v1.flow_rate > 0 && v2.flow_rate == 0 {
+    Less
+  } else if v1.flow_rate == 0 && v2.flow_rate == 0 {
+    Equal
+  } else if opened_valves_set.contains(&v1.name) && !opened_valves_set.contains(&v2.name) {
+    Greater
+  } else if !opened_valves_set.contains(&v1.name) && opened_valves_set.contains(&v2.name) {
+    Less
+  } else {
+    Equal
+  }
 }
 
 #[memoize]
@@ -148,19 +164,7 @@ fn solve_from(
   neighbors.sort_by(|v1, v2| {
     let v1v = VALVE_LOOKUP.with(|c| c.borrow().get(v1).cloned()).unwrap();
     let v2v = VALVE_LOOKUP.with(|c| c.borrow().get(v2).cloned()).unwrap();
-    if v1v.flow_rate == 0 && v2v.flow_rate > 0 {
-      Greater
-    } else if v1v.flow_rate > 0 && v2v.flow_rate == 0 {
-      Less
-    } else if v1v.flow_rate == 0 && v2v.flow_rate == 0 {
-      Equal
-    } else if opened_valves_set.contains(v1) && !opened_valves_set.contains(v2) {
-      Greater
-    } else if !opened_valves_set.contains(v1) && opened_valves_set.contains(v2) {
-      Less
-    } else {
-      Equal
-    }
+    sort_valves(&opened_valves_set, &v1v, &v2v)
   });
 
   for n in neighbors {
@@ -236,34 +240,80 @@ fn solve_from(
   (best_path, best_score)
 }
 
-#[memoize]
+#[derive(Clone, Eq, PartialEq, Hash)]
+struct StartLocation {
+  name: String,
+  just_opened: bool,
+}
+
+impl StartLocation {
+  fn to_string(self: &Self) -> String {
+    format!("{} {}", self.name, self.just_opened)
+  }
+}
+
+#[derive(Clone, Eq, PartialEq, Hash)]
+struct StartData {
+  start1: StartLocation,
+  start2: StartLocation,
+}
+
+impl StartData {
+  fn sorted_to_string(self: &Self) -> String {
+    let mut v = vec![&self.start1, &self.start2];
+    v.sort_by_key(|s| &s.name);
+    v.iter().map(|s| s.to_string()).collect::<Vec<String>>().join("")
+  }
+}
+
+
+fn make_memo_key(starts: &StartData, opened: &HashSet<String>, score: i64, minutes_left: i64) -> String {
+  let mut sorted_opened = Vec::from_iter(opened.clone());
+  sorted_opened.sort();
+  format!(
+    "{}, {:?}, {}, {}",
+    starts.sorted_to_string(),
+    sorted_opened.join(""),
+    score,
+    minutes_left,
+  )
+}
+
 fn solve_from_2(
-  start_strings: (String, String),
-  opened: Vec<String>,
+  starts: StartData,
+  opened: HashSet<String>,
   score: i64,
   minutes_left: i64,
-  just_opened: (bool, bool),
-) -> (Vec<String>, i64) {
-  let opened_valves_set: HashSet<String> = HashSet::from_iter(opened.clone());
-  let valves_with_non_zero_flow_rate = VALVES_WITH_NON_ZERO_FLOW_RATE.with(|c| c.borrow().clone());
-
-  if minutes_left <= 0 || valves_with_non_zero_flow_rate == opened_valves_set {
-    return (Vec::new(), score);
+) -> i64 {
+  let memo_key = make_memo_key(&starts, &opened, score, minutes_left);
+  let memo_result = MEMO_2.with(|c| c.borrow().get(&memo_key).cloned());
+  match memo_result {
+    None => {}
+    Some(r) => { return r; }
   }
 
-  let start1 = VALVE_LOOKUP.with(|c| c.borrow().get(&start_strings.0).cloned()).unwrap();
-  let start2 = VALVE_LOOKUP.with(|c| c.borrow().get(&start_strings.1).cloned()).unwrap();
+  let valves_with_non_zero_flow_rate = VALVES_WITH_NON_ZERO_FLOW_RATE.with(|c| c.borrow().clone());
+
+  if minutes_left <= 0 || valves_with_non_zero_flow_rate == opened {
+    MEMO_2.with(|c| c.borrow_mut().insert(memo_key, score));
+    return score;
+  }
+
+  let start1 = VALVE_LOOKUP.with(|c| c.borrow().get(&starts.start1.name).cloned()).unwrap();
+  let start2 = VALVE_LOOKUP.with(|c| c.borrow().get(&starts.start2.name).cloned()).unwrap();
   let mut best_score = 0;
 
 
   // Both opened
-  if just_opened.0 && just_opened.1 {
-    let (p, s) = solve_from_2(
-      start_strings.clone(),
+  if starts.start1.just_opened && starts.start2.just_opened {
+    let s = solve_from_2(
+      StartData {
+        start1: StartLocation { name: starts.start1.name, just_opened: false },
+        start2: StartLocation { name: starts.start2.name, just_opened: false },
+      },
       opened.clone(),
       score,
       minutes_left - 1,
-      (false, false),
     );
     if s > best_score {
       best_score = s;
@@ -271,30 +321,33 @@ fn solve_from_2(
   }
 
   // First opened
-  else if just_opened.0 && !just_opened.1 {
+  else if starts.start1.just_opened && !starts.start2.just_opened {
     for n_name in start2.neighbors.clone() {
       let n = VALVE_LOOKUP.with(|c| c.borrow().get(&n_name).cloned()).unwrap();
       if !opened.contains(&n_name) && n.flow_rate > 0 {
         let mut updated_opened = opened.clone();
-        updated_opened.push(n_name.clone());
-        updated_opened.sort();
-        let (p, s) = solve_from_2(
-          (start_strings.0.clone(), n_name.clone()),
+        updated_opened.insert(n_name.clone());
+        let s = solve_from_2(
+          StartData {
+            start1: StartLocation { name: starts.start1.name.clone(), just_opened: false },
+            start2: StartLocation { name: n_name.clone(), just_opened: true },
+          },
           updated_opened,
           score + ((minutes_left - 2) * n.flow_rate),
           minutes_left - 1,
-          (false, true),
         );
         if s > best_score {
           best_score = s;
         }
       }
-      let (p, s) = solve_from_2(
-        (start_strings.0.clone(), n_name.clone()),
+      let s = solve_from_2(
+        StartData {
+          start1: StartLocation { name: starts.start1.name.clone(), just_opened: false },
+          start2: StartLocation { name: n_name.clone(), just_opened: false },
+        },
         opened.clone(),
         score,
         minutes_left - 1,
-        (false, false),
       );
       if s > best_score {
         best_score = s;
@@ -303,30 +356,33 @@ fn solve_from_2(
   }
 
   // Second opened
-  else if !just_opened.0 && just_opened.1 {
+  else if !starts.start1.just_opened && starts.start2.just_opened {
     for n_name in start1.neighbors.clone() {
       let n = VALVE_LOOKUP.with(|c| c.borrow().get(&n_name).cloned()).unwrap();
       if !opened.contains(&n_name) && n.flow_rate > 0 {
         let mut updated_opened = opened.clone();
-        updated_opened.push(n_name.clone());
-        updated_opened.sort();
-        let (p, s) = solve_from_2(
-          (n_name.clone(), start_strings.1.clone()),
+        updated_opened.insert(n_name.clone());
+        let s = solve_from_2(
+          StartData {
+            start1: StartLocation { name: n_name.clone(), just_opened: true },
+            start2: StartLocation { name: starts.start2.name.clone(), just_opened: false },
+          },
           updated_opened,
           score + ((minutes_left - 2) * n.flow_rate),
           minutes_left - 1,
-          (true, false),
         );
         if s > best_score {
           best_score = s;
         }
       }
-      let (p, s) = solve_from_2(
-        (n_name.clone(), start_strings.1.clone()),
+      let s = solve_from_2(
+        StartData {
+          start1: StartLocation { name: n_name.clone(), just_opened: false },
+          start2: StartLocation { name: starts.start2.name.clone(), just_opened: false },
+        },
         opened.clone(),
         score,
         minutes_left - 1,
-        (false, false),
       );
       if s > best_score {
         best_score = s;
@@ -334,7 +390,7 @@ fn solve_from_2(
     }
   } else {
     // Neither opened
-    let combinations = combos(&start1.neighbors, &start2.neighbors);
+    let combinations = combos(&opened, &start1.neighbors, &start2.neighbors);
 
     for combo in combinations {
       let n1 = VALVE_LOOKUP.with(|c| c.borrow().get(&combo.0).cloned()).unwrap();
@@ -345,16 +401,17 @@ fn solve_from_2(
         && !opened.contains(&n1.name) && n1.flow_rate > 0
         && !opened.contains(&n2.name) && n2.flow_rate > 0 {
         let mut updated_opened = opened.clone();
-        updated_opened.push(n1.name.clone());
-        updated_opened.push(n2.name.clone());
-        updated_opened.sort();
+        updated_opened.insert(n1.name.clone());
+        updated_opened.insert(n2.name.clone());
 
-        let (p, s) = solve_from_2(
-          (n1.name.clone(), n2.name.clone()),
+        let s = solve_from_2(
+          StartData {
+            start1: StartLocation { name: n1.name.clone(), just_opened: true },
+            start2: StartLocation { name: n2.name.clone(), just_opened: true },
+          },
           updated_opened,
           score + ((minutes_left - 2) * n1.flow_rate) + ((minutes_left - 2) * n2.flow_rate),
           minutes_left - 1,
-          (true, true),
         );
         if s > best_score {
           best_score = s;
@@ -363,15 +420,16 @@ fn solve_from_2(
       // Open first
       if !opened.contains(&n1.name) && n1.flow_rate > 0 {
         let mut updated_opened = opened.clone();
-        updated_opened.push(n1.name.clone());
-        updated_opened.sort();
+        updated_opened.insert(n1.name.clone());
 
-        let (p, s) = solve_from_2(
-          (n1.name.clone(), n2.name.clone()),
+        let s = solve_from_2(
+          StartData {
+            start1: StartLocation { name: n1.name.clone(), just_opened: true },
+            start2: StartLocation { name: n2.name.clone(), just_opened: false },
+          },
           updated_opened,
           score + ((minutes_left - 2) * n1.flow_rate),
           minutes_left - 1,
-          (true, false),
         );
         if s > best_score {
           best_score = s;
@@ -381,15 +439,16 @@ fn solve_from_2(
       // Open second
       if !opened.contains(&n2.name) && n2.flow_rate > 0 {
         let mut updated_opened = opened.clone();
-        updated_opened.push(n2.name.clone());
-        updated_opened.sort();
+        updated_opened.insert(n2.name.clone());
 
-        let (p, s) = solve_from_2(
-          (n1.name.clone(), n2.name.clone()),
+        let s = solve_from_2(
+          StartData {
+            start1: StartLocation { name: n1.name.clone(), just_opened: false },
+            start2: StartLocation { name: n2.name.clone(), just_opened: true },
+          },
           updated_opened,
           score + ((minutes_left - 2) * n2.flow_rate),
           minutes_left - 1,
-          (false, true),
         );
         if s > best_score {
           best_score = s;
@@ -397,12 +456,14 @@ fn solve_from_2(
       }
 
       // Open neither
-      let (p, s) = solve_from_2(
-        (n1.name.clone(), n2.name.clone()),
+      let s = solve_from_2(
+        StartData {
+          start1: StartLocation { name: n1.name.clone(), just_opened: false },
+          start2: StartLocation { name: n2.name.clone(), just_opened: false },
+        },
         opened.clone(),
         score,
         minutes_left - 1,
-        (false, false),
       );
       if s > best_score {
         best_score = s;
@@ -410,37 +471,50 @@ fn solve_from_2(
     }
   }
 
-  (Vec::new(), best_score)
+  MEMO_2.with(|c| c.borrow_mut().insert(memo_key, best_score));
+  return best_score;
 }
 
-fn combos(n1: &Vec<String>, n2: &Vec<String>) -> Vec<(String, String)> {
+fn combos(opened: &HashSet<String>, n1: &Vec<String>, n2: &Vec<String>) -> Vec<(String, String)> {
+  let mut sorted_1 = n1
+    .iter()
+    .map(|name| VALVE_LOOKUP.with(|c| c.borrow().get(name).cloned()).unwrap())
+    .collect::<Vec<Valve>>();
+  sorted_1.sort_by(|a, b| sort_valves(opened, a, b));
+
+  let mut sorted_2 = n2
+    .iter()
+    .map(|name| VALVE_LOOKUP.with(|c| c.borrow().get(name).cloned()).unwrap())
+    .collect::<Vec<Valve>>();
+  sorted_2.sort_by(|a, b| sort_valves(opened, a, b));
+
   let mut combos_set: HashSet<(String, String)> = HashSet::new();
-  for _n1 in n1 {
-    for _n2 in n2 {
-      let mut vec = vec![_n1, _n2];
+  for _n1 in &sorted_1 {
+    for _n2 in &sorted_2 {
+      let mut vec = vec![_n1.name.clone(), _n2.name.clone()];
       vec.sort();
 
       combos_set.insert((vec.get(0).unwrap().to_string(), vec.get(1).unwrap().to_string()));
     }
   };
 
-  let mut v = Vec::from_iter(combos_set);
-  v.sort();
-  v
+  Vec::from_iter(combos_set)
 }
 
 fn solve_two() -> u64 {
   let highest_score = solve_from_2(
-    ("AA".to_string(), "AA".to_string()),
-    Vec::new(),
+    StartData {
+      start1: StartLocation { name: "AA".to_string(), just_opened: false },
+      start2: StartLocation { name: "AA".to_string(), just_opened: false },
+    },
+    HashSet::new(),
     0,
     26,
-    (false, false),
   );
 
   let x = 0;
 
-  highest_score.1 as u64
+  highest_score as u64
 }
 
 #[cfg(test)]
