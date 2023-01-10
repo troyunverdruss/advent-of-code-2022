@@ -35,7 +35,7 @@ pub fn part_one() -> u64 {
   let lines = read_chunks("day16.txt", "\n");
   setup_globals(&lines);
 
-  solve_one()
+  solve_one_try_2()
 }
 
 fn setup_globals(lines: &Vec<String>) {
@@ -358,7 +358,7 @@ fn part_1_try_2_solver(
     return score;
   }
 
-  let mut best_score = 0;
+  let mut best_score = score;
   for next_valve_name in remaining_valves {
     let mut updated_remaining_valves = remaining_valves.clone();
     updated_remaining_valves.remove(next_valve_name);
@@ -381,6 +381,44 @@ fn part_1_try_2_solver(
 
   best_score
 }
+
+// fn part_2_try_2_solver(
+//   distance_lookup: &HashMap<(String, String), u64>,
+//   valve_lookup: &HashMap<String, Valve>,
+//   remaining_valves: &HashSet<String>,
+//   score: u64,
+//   minutes_remaining_1: u64,
+//   minutes_remaining_2: u64,
+//   location_1: String,
+//   location_2: String,
+// ) -> u64 {
+//   if remaining_valves.is_empty() {
+//     return score;
+//   }
+//
+//   let mut best_score = 0;
+//   for next_valve_name in remaining_valves {
+//     let mut updated_remaining_valves = remaining_valves.clone();
+//     updated_remaining_valves.remove(next_valve_name);
+//     let distance = distance_lookup.get(&(location.clone(), next_valve_name.clone())).unwrap();
+//     if (distance + 1) < minutes_remaining {
+//       let next_valve = VALVE_LOOKUP.with(|c| c.borrow().get(next_valve_name).unwrap().clone());
+//       let score = part_1_try_2_solver(
+//         distance_lookup,
+//         valve_lookup,
+//         &updated_remaining_valves,
+//         score + ((minutes_remaining - distance - 1) * next_valve.flow_rate as u64),
+//         minutes_remaining - distance - 1,
+//         next_valve_name.clone(),
+//       );
+//       if score > best_score {
+//         best_score = score;
+//       }
+//     }
+//   }
+//
+//   best_score
+// }
 
 
 fn solve_from_2(
