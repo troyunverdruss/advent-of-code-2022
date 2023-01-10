@@ -1,9 +1,10 @@
 use std::borrow::BorrowMut;
 use std::cmp::{max, Ordering};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::{Hash, Hasher};
 use memoize::memoize;
 use combinations::Combinations;
+use permutations::Permutations;
 
 use crate::day08::Point;
 use crate::day09::distance;
@@ -58,7 +59,7 @@ pub fn part_two() -> u64 {
   solve_two()
 }
 
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Debug)]
 struct Valve {
   name: String,
   flow_rate: i64,
@@ -101,6 +102,22 @@ fn solve_one() -> u64 {
   let x = 0;
 
   highest_score.1 as u64
+}
+
+fn solve_one_try_2() -> u64 {
+  let valves = VALVES.with(|c| c.borrow().clone());
+  let distance_lookup = compute_distances_between_non_zero_nodes(&valves);
+  let remaining_non_zero_valves = VALVES_WITH_NON_ZERO_FLOW_RATE.with(|c| c.borrow().clone());
+  let valve_lookup = VALVE_LOOKUP.with(|c| c.borrow().clone());
+
+  part_1_try_2_solver(
+    &distance_lookup,
+    &valve_lookup,
+    &remaining_non_zero_valves,
+    0,
+    30,
+    "AA".to_string()
+  )
 }
 
 #[derive(Eq, PartialEq, Hash)]
@@ -279,6 +296,93 @@ fn make_memo_key(starts: &StartData, opened: &HashSet<String>, score: i64, minut
   )
 }
 
+fn compute_distances_between_non_zero_nodes(valves: &Vec<Valve>) -> HashMap<(String, String), u64> {
+  let mut distances = HashMap::new();
+
+  let important_valves: Vec<&Valve> = valves
+    .iter()
+    .filter(|v| v.name == "AA" || v.flow_rate > 0)
+    .collect();
+
+  for combo in Combinations::new(important_valves, 2) {
+    let start = combo.get(0).unwrap();
+    let end = combo.get(1).unwrap();
+    let dist = shortest_distance_between_valves(start, end);
+
+    distances.insert((start.name.clone(), end.name.clone()), dist);
+    distances.insert((end.name.clone(), start.name.clone()), dist);
+  }
+
+  distances
+}
+
+fn shortest_distance_between_valves(v1: &Valve, v2: &Valve) -> u64 {
+  let mut to_visit = VecDeque::new();
+  let mut visited = HashSet::new();
+  to_visit.push_back((v1.name.clone(), 0));
+
+  let valve_lookup = VALVE_LOOKUP.with(|c| c.borrow().clone());
+
+  while !to_visit.is_empty() {
+    let (curr_node_name, curr_steps) = to_visit.pop_front().unwrap();
+    let curr_node = valve_lookup.get(&curr_node_name).unwrap();
+
+    visited.insert(curr_node_name.clone());
+    for n in curr_node.neighbors.clone() {
+      if n == v2.name {
+        return curr_steps + 1;
+      }
+      to_visit.push_back((n.clone(), curr_steps + 1));
+    }
+  }
+
+  panic!("No path could be found between {:?} and {:?}", v1, v2);
+}
+
+fn part_2_try_2(valves: &Vec<Valve>) {
+  let distance_lookup = compute_distances_between_non_zero_nodes(&valves);
+  let remaining_non_zero_valves = VALVES_WITH_NON_ZERO_FLOW_RATE.with(|c| c.borrow().clone());
+  let valve_lookup = VALVE_LOOKUP.with(|c| c.borrow().clone());
+
+}
+
+fn part_1_try_2_solver(
+  distance_lookup: &HashMap<(String, String), u64>,
+  valve_lookup: &HashMap<String, Valve>,
+  remaining_valves: &HashSet<String>,
+  score: u64,
+  minutes_remaining: u64,
+  location: String,
+) -> u64 {
+  if remaining_valves.is_empty() || minutes_remaining <= 0 {
+    return score;
+  }
+
+  let mut best_score = 0;
+  for next_valve_name in remaining_valves {
+    let mut updated_remaining_valves = remaining_valves.clone();
+    updated_remaining_valves.remove(next_valve_name);
+    let distance = distance_lookup.get(&(location.clone(), next_valve_name.clone())).unwrap();
+    if (distance + 1) < minutes_remaining {
+      let next_valve = VALVE_LOOKUP.with(|c| c.borrow().get(next_valve_name).unwrap().clone());
+      let score = part_1_try_2_solver(
+        distance_lookup,
+        valve_lookup,
+        &updated_remaining_valves,
+        score + ((minutes_remaining - distance - 1) * next_valve.flow_rate as u64),
+        minutes_remaining - distance - 1,
+        next_valve_name.clone(),
+      );
+      if score > best_score {
+        best_score = score;
+      }
+    }
+  }
+
+  best_score
+}
+
+
 fn solve_from_2(
   starts: StartData,
   opened: HashSet<String>,
@@ -292,17 +396,14 @@ fn solve_from_2(
     Some(r) => { return r; }
   }
 
-  let valves_with_non_zero_flow_rate = VALVES_WITH_NON_ZERO_FLOW_RATE.with(|c| c.borrow().clone());
+  let all_opened = VALVES_WITH_NON_ZERO_FLOW_RATE.with(|c| c.borrow().eq(&opened));
 
-  if minutes_left <= 0 || valves_with_non_zero_flow_rate == opened {
+  if minutes_left <= 0 || all_opened {
     MEMO_2.with(|c| c.borrow_mut().insert(memo_key, score));
     return score;
   }
 
-  let start1 = VALVE_LOOKUP.with(|c| c.borrow().get(&starts.start1.name).cloned()).unwrap();
-  let start2 = VALVE_LOOKUP.with(|c| c.borrow().get(&starts.start2.name).cloned()).unwrap();
   let mut best_score = 0;
-
 
   // Both opened
   if starts.start1.just_opened && starts.start2.just_opened {
@@ -322,7 +423,8 @@ fn solve_from_2(
 
   // First opened
   else if starts.start1.just_opened && !starts.start2.just_opened {
-    for n_name in start2.neighbors.clone() {
+    let start2_neighbors = VALVE_LOOKUP.with(|c| c.borrow().get(&starts.start2.name).unwrap().neighbors.clone());
+    for n_name in start2_neighbors {
       let n = VALVE_LOOKUP.with(|c| c.borrow().get(&n_name).cloned()).unwrap();
       if !opened.contains(&n_name) && n.flow_rate > 0 {
         let mut updated_opened = opened.clone();
@@ -357,7 +459,8 @@ fn solve_from_2(
 
   // Second opened
   else if !starts.start1.just_opened && starts.start2.just_opened {
-    for n_name in start1.neighbors.clone() {
+    let start1_neighbors = VALVE_LOOKUP.with(|c| c.borrow().get(&starts.start1.name).unwrap().neighbors.clone());
+    for n_name in start1_neighbors {
       let n = VALVE_LOOKUP.with(|c| c.borrow().get(&n_name).cloned()).unwrap();
       if !opened.contains(&n_name) && n.flow_rate > 0 {
         let mut updated_opened = opened.clone();
@@ -390,7 +493,9 @@ fn solve_from_2(
     }
   } else {
     // Neither opened
-    let combinations = combos(&opened, &start1.neighbors, &start2.neighbors);
+    let start1_neighbors = VALVE_LOOKUP.with(|c| c.borrow().get(&starts.start1.name).unwrap().neighbors.clone());
+    let start2_neighbors = VALVE_LOOKUP.with(|c| c.borrow().get(&starts.start2.name).unwrap().neighbors.clone());
+    let combinations = combos(&opened, &start1_neighbors, &start2_neighbors);
 
     for combo in combinations {
       let n1 = VALVE_LOOKUP.with(|c| c.borrow().get(&combo.0).cloned()).unwrap();
@@ -521,7 +626,7 @@ fn solve_two() -> u64 {
 mod tests {
   use std::cmp::Ordering;
   use std::collections::HashMap;
-  use crate::day16::{parse_input, setup_globals, solve_one, solve_two};
+  use crate::day16::{parse_input, setup_globals, solve_one, solve_one_try_2, solve_two};
 
   use crate::utils::read_chunks;
 
@@ -529,21 +634,21 @@ mod tests {
   fn test_part_1() {
     let input = get_input();
     setup_globals(&input);
-    assert_eq!(solve_one(), 1651);
+    assert_eq!(solve_one_try_2(), 1651);
   }
 
   #[test]
   fn test_part_doctored_simple_input() {
     let input = get_doctored_simplest_input();
     setup_globals(&input);
-    assert_eq!(solve_one(), 416);
+    assert_eq!(solve_one_try_2(), 416);
   }
 
   #[test]
   fn test_made_up_simple_input() {
     let input = get_made_up_input();
     setup_globals(&input);
-    assert_eq!(solve_one(), 439);
+    assert_eq!(solve_one_try_2(), 439);
   }
 
   #[test]

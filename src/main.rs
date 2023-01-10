@@ -1,3 +1,5 @@
+extern crate core;
+
 mod day01;
 mod utils;
 mod day02;
