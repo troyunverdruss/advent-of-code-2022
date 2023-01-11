@@ -30,6 +30,10 @@ thread_local!(static MEMO_2: RefCell<HashMap<String, i64>> = {
     let mut cache = HashMap::new();
     RefCell::new(cache)
 });
+thread_local!(static MEMO_TRY_2: RefCell<HashMap<String, i64>> = {
+    let mut cache = HashMap::new();
+    RefCell::new(cache)
+});
 
 pub fn part_one() -> u64 {
   let lines = read_chunks("day16.txt", "\n");
@@ -56,7 +60,7 @@ pub fn part_two() -> u64 {
   let lines = read_chunks("day16.txt", "\n");
   setup_globals(&lines);
 
-  solve_two()
+  solve_two_try_2()
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Debug)]
@@ -117,6 +121,25 @@ fn solve_one_try_2() -> u64 {
     0,
     30,
     "AA".to_string()
+  )
+}
+fn solve_two_try_2() -> u64 {
+  let valves = VALVES.with(|c| c.borrow().clone());
+  let distance_lookup = compute_distances_between_non_zero_nodes(&valves);
+  let remaining_non_zero_valves = VALVES_WITH_NON_ZERO_FLOW_RATE.with(|c| c.borrow().clone());
+  let valve_lookup = VALVE_LOOKUP.with(|c| c.borrow().clone());
+
+  //TOO LOW 2580
+
+  part_2_try_2_solver(
+    &distance_lookup,
+    &valve_lookup,
+    &remaining_non_zero_valves,
+    0,
+    26,
+    26,
+    "AA".to_string(),
+    "AA".to_string(),
   )
 }
 
@@ -381,6 +404,110 @@ fn part_1_try_2_solver(
 
   best_score
 }
+
+fn part_2_try_2_memo_key(
+  remaining_valves: &HashSet<String>,
+  score: u64,
+  minutes_remaining_1: u64,
+  minutes_remaining_2: u64,
+  location_1: &String,
+  location_2: &String,
+) -> String {
+  let mut sorted_remaining = Vec::from_iter(remaining_valves);
+  sorted_remaining.sort();
+
+  format!(
+    "{:?}, {}, {}, {}, {}, {}",
+    sorted_remaining,
+    score,
+    minutes_remaining_1,
+    minutes_remaining_2,
+    location_1,
+    location_2
+  )
+}
+
+fn part_2_try_2_solver(
+  distance_lookup: &HashMap<(String, String), u64>,
+  valve_lookup: &HashMap<String, Valve>,
+  remaining_valves: &HashSet<String>,
+  score: u64,
+  minutes_remaining_1: u64,
+  minutes_remaining_2: u64,
+  location_1: String,
+  location_2: String,
+) -> u64 {
+  // let memo_key = part_2_try_2_memo_key(
+  //   remaining_valves,
+  //   score,
+  //   minutes_remaining_1,
+  //   minutes_remaining_2,
+  //   &location_1,
+  //   &location_2
+  // );
+
+  // let memo_result = MEMO_TRY_2.with(|c| c.borrow().get(&memo_key).cloned());
+  // match memo_result {
+  //   None => {}
+  //   Some(v) => { return v as u64; }
+  // }
+
+  if remaining_valves.is_empty() || (minutes_remaining_1 <= 0 && minutes_remaining_2 <= 0) {
+    // MEMO_TRY_2.with(|c| c.borrow_mut().insert(memo_key.clone(), score as i64));
+    return score;
+  }
+
+  let mut best_score = score;
+  if minutes_remaining_1 >= minutes_remaining_2 {
+    for next_valve_name in remaining_valves {
+      let mut updated_remaining_valves = remaining_valves.clone();
+      updated_remaining_valves.remove(next_valve_name);
+      let distance = distance_lookup.get(&(location_1.clone(), next_valve_name.clone())).unwrap();
+      if (distance + 1) < minutes_remaining_1 {
+        let next_valve = VALVE_LOOKUP.with(|c| c.borrow().get(next_valve_name).unwrap().clone());
+        let score = part_2_try_2_solver(
+          distance_lookup,
+          valve_lookup,
+          &updated_remaining_valves,
+          score + ((minutes_remaining_1 - distance - 1) * next_valve.flow_rate as u64),
+          minutes_remaining_1 - distance - 1,
+          minutes_remaining_2,
+          next_valve_name.clone(),
+          location_2.clone()
+        );
+        if score > best_score {
+          best_score = score;
+        }
+      }
+    }
+  } else {
+    for next_valve_name in remaining_valves {
+      let mut updated_remaining_valves = remaining_valves.clone();
+      updated_remaining_valves.remove(next_valve_name);
+      let distance = distance_lookup.get(&(location_2.clone(), next_valve_name.clone())).unwrap();
+      if (distance + 1) < minutes_remaining_2 {
+        let next_valve = VALVE_LOOKUP.with(|c| c.borrow().get(next_valve_name).unwrap().clone());
+        let score = part_2_try_2_solver(
+          distance_lookup,
+          valve_lookup,
+          &updated_remaining_valves,
+          score + ((minutes_remaining_2 - distance - 1) * next_valve.flow_rate as u64),
+          minutes_remaining_1,
+          minutes_remaining_2 - distance - 1,
+          location_1.clone(),
+          next_valve_name.clone()
+        );
+        if score > best_score {
+          best_score = score;
+        }
+      }
+    }
+  }
+
+  // MEMO_TRY_2.with(|c| c.borrow_mut().insert(memo_key.clone(), best_score as i64));
+  best_score
+}
+
 
 // fn part_2_try_2_solver(
 //   distance_lookup: &HashMap<(String, String), u64>,
@@ -664,7 +791,7 @@ fn solve_two() -> u64 {
 mod tests {
   use std::cmp::Ordering;
   use std::collections::HashMap;
-  use crate::day16::{parse_input, setup_globals, solve_one, solve_one_try_2, solve_two};
+  use crate::day16::{parse_input, setup_globals, solve_one, solve_one_try_2, solve_two, solve_two_try_2};
 
   use crate::utils::read_chunks;
 
@@ -693,7 +820,7 @@ mod tests {
   fn test_part_2() {
     let input = get_input();
     setup_globals(&input);
-    assert_eq!(solve_two(), 1707);
+    assert_eq!(solve_two_try_2(), 1707);
   }
 
   fn get_input() -> Vec<String> {
