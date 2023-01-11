@@ -114,33 +114,81 @@ fn solve_one_try_2() -> u64 {
   let remaining_non_zero_valves = VALVES_WITH_NON_ZERO_FLOW_RATE.with(|c| c.borrow().clone());
   let valve_lookup = VALVE_LOOKUP.with(|c| c.borrow().clone());
 
-  part_1_try_2_solver(
+  let all_results = part_1_try_2_solver(
     &distance_lookup,
     &valve_lookup,
     &remaining_non_zero_valves,
+    &HashSet::new(),
     0,
     30,
     "AA".to_string()
-  )
+  );
+
+  all_results.iter().map(|r| (*r).1).max().unwrap()
 }
+
+fn hash_set_to_string(hs: &HashSet<String>) -> String {
+  let mut v = Vec::from_iter(hs);
+  v.sort();
+  v.iter().map(|s| s.to_string()).collect::<Vec<String>>().join("")
+}
+
 fn solve_two_try_2() -> u64 {
   let valves = VALVES.with(|c| c.borrow().clone());
   let distance_lookup = compute_distances_between_non_zero_nodes(&valves);
   let remaining_non_zero_valves = VALVES_WITH_NON_ZERO_FLOW_RATE.with(|c| c.borrow().clone());
   let valve_lookup = VALVE_LOOKUP.with(|c| c.borrow().clone());
 
-  //TOO LOW 2580
+  // TOO LOW 2580
 
-  part_2_try_2_solver(
+  let all_results = part_1_try_2_solver(
     &distance_lookup,
     &valve_lookup,
     &remaining_non_zero_valves,
+    &HashSet::new(),
     0,
     26,
-    26,
-    "AA".to_string(),
-    "AA".to_string(),
-  )
+    "AA".to_string()
+  );
+
+
+  let mut string_to_hash_set: HashMap<String, HashSet<String>> = HashMap::new();
+
+
+  let mut best_score_for_set: HashMap<String, u64> = HashMap::new();
+  for r in all_results {
+    let string_key = hash_set_to_string(&r.0);
+    string_to_hash_set.insert(string_key.clone(), r.0.clone());
+
+    match best_score_for_set.get(&string_key) {
+      None => { best_score_for_set.insert(string_key.clone(), r.1); }
+      Some(v) => {
+        if v < &r.1 {
+          best_score_for_set.insert(string_key.clone(), r.1);
+        }
+      }
+    }
+  }
+
+  let mut best_score = 0;
+  let all_keys = best_score_for_set.keys().map(|k| k.to_string()).collect::<Vec<String>>();
+  for pair in Combinations::new(all_keys, 2) {
+    let set_key_1 = pair.get(0).unwrap();
+    let set_key_2 = pair.get(1).unwrap();
+    let set_1 = string_to_hash_set.get(set_key_1).unwrap();
+    let set_2 = string_to_hash_set.get(set_key_2).unwrap();
+
+    let intersection = set_1.intersection(set_2);
+    if intersection.count() == 0 {
+      let score_1 = best_score_for_set.get(set_key_1).unwrap();
+      let score_2 = best_score_for_set.get(set_key_2).unwrap();
+      if score_1 + score_2 > best_score {
+        best_score = score_1 + score_2;
+      }
+    }
+  }
+
+  best_score
 }
 
 #[derive(Eq, PartialEq, Hash)]
@@ -373,36 +421,42 @@ fn part_1_try_2_solver(
   distance_lookup: &HashMap<(String, String), u64>,
   valve_lookup: &HashMap<String, Valve>,
   remaining_valves: &HashSet<String>,
+  opened: &HashSet<String>,
   score: u64,
   minutes_remaining: u64,
   location: String,
-) -> u64 {
+) -> Vec<(HashSet<String>, u64)> {
   if remaining_valves.is_empty() || minutes_remaining <= 0 {
-    return score;
+    return vec![(opened.clone(), score)];
   }
 
-  let mut best_score = score;
+  let mut all_results = Vec::new();
+  all_results.push((opened.clone(), score));
+
+
   for next_valve_name in remaining_valves {
     let mut updated_remaining_valves = remaining_valves.clone();
     updated_remaining_valves.remove(next_valve_name);
+    let mut updated_opened = opened.clone();
+    updated_opened.insert(next_valve_name.clone());
     let distance = distance_lookup.get(&(location.clone(), next_valve_name.clone())).unwrap();
     if (distance + 1) < minutes_remaining {
       let next_valve = VALVE_LOOKUP.with(|c| c.borrow().get(next_valve_name).unwrap().clone());
-      let score = part_1_try_2_solver(
+      let result = part_1_try_2_solver(
         distance_lookup,
         valve_lookup,
         &updated_remaining_valves,
+        &updated_opened,
         score + ((minutes_remaining - distance - 1) * next_valve.flow_rate as u64),
         minutes_remaining - distance - 1,
         next_valve_name.clone(),
       );
-      if score > best_score {
-        best_score = score;
-      }
+
+      all_results.extend(result);
     }
   }
 
-  best_score
+  all_results
 }
 
 fn part_2_try_2_memo_key(
@@ -807,6 +861,13 @@ mod tests {
     let input = get_doctored_simplest_input();
     setup_globals(&input);
     assert_eq!(solve_one_try_2(), 416);
+  }
+
+  #[test]
+  fn test_part_doctored_simple_input_2() {
+    let input = get_made_up_input();
+    setup_globals(&input);
+    assert_eq!(solve_two_try_2(), 416);
   }
 
   #[test]
