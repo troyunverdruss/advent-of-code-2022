@@ -1,7 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
 use crate::day08::Point;
-use crate::day09::distance;
 use crate::day17::JetBlastDirection::{Left, Right};
 use crate::utils::read_chunks;
 
@@ -167,8 +166,8 @@ fn calculate_height_after_dropping_many_shapes(
 fn check_if_row_is_new_floor(grid: &HashMap<Point, char>, y: u64) -> bool {
   let count = grid
     .iter()
-    .filter(|(k, v)| (*k).y == y as i64)
-    .filter(|(k, v)| **v == '#')
+    .filter(|(k, _)| (*k).y == y as i64)
+    .filter(|(_, v)| **v == '#')
     .count();
 
   count == 7
@@ -214,7 +213,7 @@ fn drop_shapes(input_jet_blasts: &VecDeque<JetBlastDirection>, max_shapes_to_dro
 fn drop_one_shape(
   jet_blasts: &mut VecDeque<JetBlastDirection>,
   shapes: &mut VecDeque<Vec<Point>>,
-  mut grid: &mut HashMap<Point, char>,
+  grid: &mut HashMap<Point, char>,
 ) {
   let left = Point { x: -1, y: 0 };
   let right = Point { x: 1, y: 0 };
@@ -357,11 +356,6 @@ pub fn dbg_print_grid(grid: &HashMap<Point, char>, intermediate_rock: Option<&Ve
   println!();
 }
 
-
-fn solve_two(lines: &Vec<String>, max_range: i64) -> i64 {
-  0
-}
-
 fn get_shapes() -> VecDeque<Vec<Point>> {
   let shapes_vec = vec![
     // ####
@@ -411,8 +405,9 @@ fn get_shapes() -> VecDeque<Vec<Point>> {
 #[cfg(test)]
 mod tests {
   use std::collections::{HashMap, VecDeque};
+
   use crate::day08::Point;
-  use crate::day17::{parse_input, drop_shapes, find_highest_point, find_full_line, check_if_row_is_new_floor, analyze_find_first_repeating_index_delta, drop_one_shape, get_shapes, JetBlastDirection, AnalyzeResult, calculate_height_after_dropping_many_shapes};
+  use crate::day17::{analyze_find_first_repeating_index_delta, AnalyzeResult, calculate_height_after_dropping_many_shapes, check_if_row_is_new_floor, drop_one_shape, drop_shapes, find_full_line, find_highest_point, get_shapes, JetBlastDirection, parse_input};
   use crate::utils::read_chunks;
 
   #[test]
