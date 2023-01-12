@@ -18,9 +18,10 @@ mod day14;
 mod day15;
 mod day16;
 mod day17;
+mod day18;
 
 fn main() {
-  let day_to_solve = 17;
+  let day_to_solve = 18;
 
   if day_to_solve == 0 || day_to_solve == 1 {
     let solution_day01_part1 = day01::part_one();
@@ -138,5 +139,12 @@ fn main() {
     println!("Day 17, part 1: Height after 2022 blocks: {}", solution_day17_part1);
     let solution_day17_part2 = day17::part_two();
     println!("Day 17, part 2: Height after 1000000000000 blocks: {}", solution_day17_part2);
+  }
+  
+  if day_to_solve == 0 || day_to_solve == 18 {
+    let solution_day18_part1 = day18::part_one();
+    println!("Day 18, part 1: Total surface area: {}", solution_day18_part1);
+    let solution_day18_part2 = day18::part_two();
+    println!("Day 18, part 2: Exterior surface area: {}", solution_day18_part2);
   }
 }
