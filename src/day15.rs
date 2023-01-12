@@ -80,7 +80,7 @@ fn solve_two(lines: &Vec<String>, max_range: i64) -> i64 {
   input_pairs
     .iter()
     .enumerate()
-    .for_each(|(id, ip)| {
+    .for_each(|(_, ip)| {
       // println!("{} Processing sensor {:?}", id, ip.sensor);
       draw_circle_in_grid(&mut grid, ip, max_range);
       grid = grid
