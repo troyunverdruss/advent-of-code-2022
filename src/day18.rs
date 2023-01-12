@@ -11,7 +11,103 @@ pub fn part_one() -> u64 {
 }
 
 pub fn part_two() -> u64 {
-  0
+  let lines = read_chunks("day18.txt", "\n");
+  let points = parse_input(&lines);
+
+  solve_part_2(&points)
+}
+
+fn solve_part_2(points: &Vec<Point3>) -> u64 {
+  let empty_fill_grid = fill_grid_with_surrounding_cube(&points);
+  let filled_grid = fill_grid_with_points(&points, &empty_fill_grid);
+  let cleared_exterior_grid = clear_exterior_grid_points(&filled_grid);
+  let interior_surface_area = compute_surface_area_of_interior_space(&cleared_exterior_grid);
+  let exterior_surface_area = find_surface_area(&points) - interior_surface_area;
+
+  exterior_surface_area
+}
+
+fn compute_surface_area_of_interior_space(cleared_exterior_grid: &HashMap<Point3, char>) -> u64 {
+  let interior_cubes = cleared_exterior_grid
+    .iter()
+    .filter(|(_, v)| **v == '.')
+    .map(|(k, _)| k.clone())
+    .collect::<Vec<Point3>>();
+
+  find_surface_area(&interior_cubes)
+}
+
+fn clear_exterior_grid_points(filled_grid: &HashMap<Point3, char>) -> HashMap<Point3, char> {
+  let min_x = filled_grid.keys().map(|k| k.x).min().unwrap();
+  let min_y = filled_grid.keys().map(|k| k.y).min().unwrap();
+  let min_z = filled_grid.keys().map(|k| k.z).min().unwrap();
+  let search_start = Point3 { x: min_x, y: min_y, z: min_z };
+
+  let mut cleared_grid = filled_grid.clone();
+  cleared_grid.insert(search_start.clone(), ' ');
+
+  let mut to_visit: VecDeque<Point3> = VecDeque::new();
+  let mut visited: HashSet<Point3> = HashSet::new();
+
+  to_visit.push_back(search_start.clone());
+
+  while !to_visit.is_empty() {
+    let current = to_visit.pop_front().unwrap();
+
+    if visited.contains(&current) {
+      continue;
+    }
+
+    for n in get_3d_neighbors(&current) {
+      if visited.contains(&n) {
+        continue;
+      }
+
+      let curr_value = cleared_grid.get(&n);
+      if curr_value.is_none() {
+        continue
+      }
+      if curr_value.unwrap() != &'#' {
+        cleared_grid.insert(n.clone(), ' ');
+        to_visit.push_back(n);
+      }
+
+      visited.insert(current);
+    }
+  }
+
+  cleared_grid
+}
+
+fn fill_grid_with_points(points: &Vec<Point3>, empty_fill_grid: &HashMap<Point3, char>) -> HashMap<Point3, char> {
+  let mut filled_grid = empty_fill_grid.clone();
+  points
+    .iter()
+    .for_each(|p| {
+      filled_grid.insert(*p, '#');
+    });
+
+  filled_grid
+}
+
+fn fill_grid_with_surrounding_cube(points: &Vec<Point3>) -> HashMap<Point3, char> {
+  let min_x = points.iter().map(|p| p.x).min().unwrap() - 1;
+  let max_x = points.iter().map(|p| p.x).max().unwrap() + 1;
+  let min_y = points.iter().map(|p| p.y).min().unwrap() - 1;
+  let max_y = points.iter().map(|p| p.y).max().unwrap() + 1;
+  let min_z = points.iter().map(|p| p.z).min().unwrap() - 1;
+  let max_z = points.iter().map(|p| p.z).max().unwrap() + 1;
+
+  let mut grid = HashMap::new();
+  for x in min_x..=max_x {
+    for y in min_y..=max_y {
+      for z in min_z..=max_z {
+        grid.insert(Point3 {x,y,z}, '.');
+      }
+    }
+  }
+
+  grid
 }
 
 
@@ -48,14 +144,7 @@ impl Add for Point3 {
 }
 
 fn find_surface_area(points: &Vec<Point3>) -> u64 {
-  let neighbors = vec![
-    Point3 { x: -1, y: 0, z: 0 },
-    Point3 { x: 1, y: 0, z: 0 },
-    Point3 { x: 0, y: -1, z: 0 },
-    Point3 { x: 0, y: 1, z: 0 },
-    Point3 { x: 0, y: 0, z: -1 },
-    Point3 { x: 0, y: 0, z: 1 },
-  ];
+  let neighbors = get_3d_neighbors_modifiers();
 
   let mut processed: HashSet<Point3> = HashSet::new();
   let mut surface_area = 0;
@@ -76,10 +165,28 @@ fn find_surface_area(points: &Vec<Point3>) -> u64 {
   surface_area
 }
 
+fn get_3d_neighbors(point: &Point3) -> Vec<Point3> {
+  get_3d_neighbors_modifiers()
+    .iter()
+    .map(|n| *point + *n)
+    .collect()
+}
+
+fn get_3d_neighbors_modifiers() -> Vec<Point3> {
+  vec![
+    Point3 { x: -1, y: 0, z: 0 },
+    Point3 { x: 1, y: 0, z: 0 },
+    Point3 { x: 0, y: -1, z: 0 },
+    Point3 { x: 0, y: 1, z: 0 },
+    Point3 { x: 0, y: 0, z: -1 },
+    Point3 { x: 0, y: 0, z: 1 },
+  ]
+}
+
 
 #[cfg(test)]
 mod tests {
-  use crate::day18::{find_surface_area, parse_input};
+  use crate::day18::{find_surface_area, parse_input, solve_part_2};
   use crate::utils::read_chunks;
 
   #[test]
@@ -96,6 +203,14 @@ mod tests {
     let points = parse_input(&input);
     let surface_area = find_surface_area(&points);
     assert_eq!(surface_area, 64);
+  }
+
+
+  #[test]
+  fn test_part_2() {
+    let input = get_part_1_sample_input();
+    let points = parse_input(&input);
+    assert_eq!(solve_part_2(&points), 58);
   }
 
   fn get_simple_input() -> Vec<String> {
