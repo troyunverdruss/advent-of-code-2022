@@ -137,6 +137,6 @@ fn main() {
     let solution_day17_part1 = day17::part_one();
     println!("Day 17, part 1: Height after 2022 blocks: {}", solution_day17_part1);
     let solution_day17_part2 = day17::part_two();
-    println!("Day 17, part 2: Most pressure that can be released with an elephant helping: {}", solution_day17_part2);
+    println!("Day 17, part 2: Height after 1000000000000 blocks: {}", solution_day17_part2);
   }
 }
