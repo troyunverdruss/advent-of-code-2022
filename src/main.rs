@@ -20,9 +20,10 @@ mod day16;
 mod day17;
 mod day18;
 mod day19;
+mod day20;
 
 fn main() {
-  let day_to_solve = 19;
+  let day_to_solve = 20;
 
   if day_to_solve == 0 || day_to_solve == 1 {
     let solution_day01_part1 = day01::part_one();
@@ -150,9 +151,16 @@ fn main() {
   }
 
   if day_to_solve == 0 || day_to_solve == 19 {
-    // let solution_day19_part1 = day19::part_one();
-    // println!("Day 19, part 1: Sum of quality scores: {}", solution_day19_part1);
+    let solution_day19_part1 = day19::part_one();
+    println!("Day 19, part 1: Sum of quality scores: {}", solution_day19_part1);
     let solution_day19_part2 = day19::part_two();
     println!("Day 19, part 2: Product of first 3 blueprints: {}", solution_day19_part2);
+  }
+
+  if day_to_solve == 0 || day_to_solve == 20 {
+    let solution_day20_part1 = day20::part_one();
+    println!("Day 20, part 1: Grove coordinates: {}", solution_day20_part1);
+    let solution_day20_part2 = day20::part_two();
+    println!("Day 20, part 2: Product of first 3 blueprints: {}", solution_day20_part2);
   }
 }

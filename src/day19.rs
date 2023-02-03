@@ -1,8 +1,5 @@
 use std::cmp::{max, Ordering};
-use std::collections::{HashMap, HashSet, VecDeque, BinaryHeap};
-use std::ops::Add;
-use std::str::Split;
-
+use std::collections::{BinaryHeap, HashSet};
 
 use crate::utils::read_chunks;
 
@@ -170,7 +167,6 @@ impl Eq for State {}
 fn max_geodes_possible(blueprint: &Blueprint, total_minutes: usize) -> usize {
   let mut final_states: Vec<State> = Vec::new();
   let mut next_states: BinaryHeap<State> = BinaryHeap::new();
-  let mut max_geodes_per_min: HashMap<usize, u64> = HashMap::new();
   let mut state_seen: HashSet<String> = HashSet::new();
 
 
@@ -189,37 +185,19 @@ fn max_geodes_possible(blueprint: &Blueprint, total_minutes: usize) -> usize {
       final_states.push(state);
     } else {
       let states = step(blueprint, &state);
-      let y = 0;
       for state in states {
-        let curr_max_score = max_geodes_per_min.get(&state.minute).or(Some(&0)).unwrap().clone();
-        let curr_score = state.score();
-        // if curr_score >= curr_max_score
-        // if !state_seen.contains(&state)
         if !state_seen.contains(&state.to_string())
         {
-          let curr_min = state.minute.clone();
-          // state_seen.insert(state.clone());
           next_states.push(state);
-          // max_geodes_per_min.insert(curr_min, curr_score);
         }
       }
     }
   }
 
-
   let max_geodes_cracked = final_states
     .iter()
     .map(|s| s.material.geode)
     .max().unwrap();
-
-  let best_states: Vec<State> = final_states
-    .iter()
-    // .filter(|s| s.material.geode == max_geodes_cracked)
-    .filter(|s| s.robots.ore >= 2)
-    .map(|s| s.clone())
-    .collect();
-
-  let x = 0;
 
   max_geodes_cracked
 }
