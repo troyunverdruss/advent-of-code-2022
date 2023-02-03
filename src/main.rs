@@ -161,6 +161,6 @@ fn main() {
     let solution_day20_part1 = day20::part_one();
     println!("Day 20, part 1: Grove coordinates: {}", solution_day20_part1);
     let solution_day20_part2 = day20::part_two();
-    println!("Day 20, part 2: Product of first 3 blueprints: {}", solution_day20_part2);
+    println!("Day 20, part 2: Grove coordinates: {}", solution_day20_part2);
   }
 }

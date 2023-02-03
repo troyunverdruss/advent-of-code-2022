@@ -9,10 +9,9 @@ use crate::utils::read_chunks;
 pub fn part_one() -> i64 {
   let lines = read_chunks("day20.txt", "\n");
   let numbers = parse_input(&lines);
-  let mixed_numbers = mix_numbers(&numbers);
+  let mixed_numbers = mix_numbers(&numbers, 1);
   let grove_coords = find_grove_coords(&mixed_numbers);
   grove_coords
-  //6220 too low
 }
 
 #[derive(Clone)]
@@ -21,90 +20,35 @@ struct Value {
   position: usize,
 }
 
-fn mix_numbers(numbers: &Vec<i64>) -> Vec<i64> {
+fn mix_numbers(numbers: &Vec<i64>, times: usize) -> Vec<i64> {
   let mut deque = numbers
     .iter()
     .enumerate()
-    .map(|(i,v)| Value { number: *v, position: i})
+    .map(|(i, v)| Value { number: *v, position: i })
     .collect::<VecDeque<Value>>();
 
-  // let mut deque = VecDeque::from_iter(numbers.clone());
-  for curr_position in 0..(numbers.len()) {
-    while deque.front().unwrap().position != curr_position {
-      deque.rotate_left(1);
-    }
+  for _ in 0..times {
+    for curr_position in 0..(numbers.len()) {
+      while deque.front().unwrap().position != curr_position {
+        deque.rotate_left(1);
+      }
 
-    let num = deque.pop_front().unwrap().clone();
-    let rotations = num.number % (numbers.len() as i64 - 1);
-    // let wraps = num / numbers.len() as i64;
-    // let rotations = rotations + wraps;
-    // assert!(rotations.abs() < (numbers.len()-1) as i64);
+      let num = deque.pop_front().unwrap().clone();
+      let rotations = num.number % (numbers.len() as i64 - 1);
 
-
-
-    if num.number > 0 {
-
-        // let tmp_num = deque.pop_front().unwrap();
+      if num.number > 0 {
         deque.rotate_left(rotations.abs() as usize);
         deque.push_front(num.clone());
-
-    } else {
-
-        // let tmp_num = deque.pop_front().unwrap();
+      } else {
         deque.rotate_right(rotations.abs() as usize);
         deque.push_front(num.clone());
-
+      }
     }
-    // deque.push_front(num);
-    // println!("P: {}, list: {:?}", num, deque);
-
   }
 
-
-  // for n in numbers {
-  //   while deque.front().unwrap().number != &0 {
-  //     deque.rotate_left(1);
-  //   }
-  //
-  //   let orig_pos = deque.iter().position(|v| v == n).unwrap();
-  //
-  //   while deque.front().unwrap() != n {
-  //     deque.rotate_left(1);
-  //   }
-  //   let num = deque.front().unwrap().clone();
-  //   // let rotations = num % (numbers.len() as i64 - 1);
-  //   // let wraps = num / numbers.len() as i64;
-  //   // let rotations = rotations + wraps;
-  //   // assert!(rotations.abs() < (numbers.len()-1) as i64);
-  //
-  //
-  //
-  //   if num > 0 {
-  //     for _ in 0..num.abs() {
-  //       let tmp_num = deque.pop_front().unwrap();
-  //       deque.rotate_left(1);
-  //       deque.push_front(tmp_num);
-  //     }
-  //   } else {
-  //     for _ in 0..num.abs() {
-  //       let tmp_num = deque.pop_front().unwrap();
-  //       deque.rotate_right(1);
-  //       deque.push_front(tmp_num);
-  //     }
-  //   }
-  //   // deque.push_front(num);
-  //   // println!("P: {}, list: {:?}", num, deque);
-
-    while deque.front().unwrap().number != 0 {
-      deque.rotate_left(1);
-    }
-
-    // let final_pos = deque.iter().position(|v| v == n).unwrap();
-    // let expected_pos = (orig_pos as i64 + n) % numbers.len() as i64;
-    // // if *n > 0 {
-    //   assert_eq!(expected_pos, final_pos as i64);
-    // }
-  // }
+  while deque.front().unwrap().number != 0 {
+    deque.rotate_left(1);
+  }
 
   deque
     .iter()
@@ -122,8 +66,17 @@ fn find_grove_coords(mixed_numbers: &Vec<i64>) -> i64 {
 }
 
 
-pub fn part_two() -> u64 {
-  0
+pub fn part_two() -> i64 {
+  let lines = read_chunks("day20.txt", "\n");
+  let numbers = parse_input(&lines);
+  let decryption_key = 811589153;
+  let updated_numbers = numbers
+    .iter()
+    .map(|n| n * decryption_key)
+    .collect();
+  let mixed_numbers = mix_numbers(&updated_numbers, 10);
+  let grove_coords = find_grove_coords(&mixed_numbers);
+  grove_coords
 }
 
 fn parse_input(lines: &Vec<String>) -> Vec<i64> {
@@ -134,12 +87,6 @@ fn parse_input(lines: &Vec<String>) -> Vec<i64> {
 }
 
 
-
-
-
-
-
-
 #[cfg(test)]
 mod tests {
   use crate::day20::{find_grove_coords, mix_numbers, parse_input};
@@ -148,7 +95,7 @@ mod tests {
   fn test_mixing_example_1() {
     let input = get_part_1_input();
     let numbers = parse_input(&input);
-    let mixed_numbers = mix_numbers(&numbers);
+    let mixed_numbers = mix_numbers(&numbers, 1);
     let grove_coords = find_grove_coords(&mixed_numbers);
 
     assert_eq!(grove_coords, 3);
@@ -158,7 +105,7 @@ mod tests {
   fn test_mixing_fake_input() {
     let input = get_part_1_fake_input();
     let numbers = parse_input(&input);
-    let mixed_numbers = mix_numbers(&numbers);
+    let mixed_numbers = mix_numbers(&numbers, 1);
 
     assert_eq!(
       mixed_numbers,
@@ -173,7 +120,7 @@ mod tests {
   #[test]
   fn test_0_n1_n1_1() {
     let numbers = vec![0, -1, -1, 1];
-    let mixed = mix_numbers(&numbers);
+    let mixed = mix_numbers(&numbers, 1);
     assert_eq!(
       mixed,
       vec![0, -1, 1, -1]
@@ -182,8 +129,8 @@ mod tests {
 
   #[test]
   fn test_3_1_0() {
-    let numbers = vec![3,1,0];
-    let mixed = mix_numbers(&numbers);
+    let numbers = vec![3, 1, 0];
+    let mixed = mix_numbers(&numbers, 1);
     assert_eq!(
       mixed,
       vec![0, 3, 1]
@@ -192,10 +139,28 @@ mod tests {
 
   #[test]
   fn test_adding_8() {
-    let numbers = vec![1,2,-3,3,-2,0,8];
-    let mixed_numbers = mix_numbers(&numbers);
+    let numbers = vec![1, 2, -3, 3, -2, 0, 8];
+    let mixed_numbers = mix_numbers(&numbers, 1);
     let grove_coords = find_grove_coords(&mixed_numbers);
     assert_eq!(grove_coords, 7);
+  }
+
+  #[test]
+  fn test_part_2() {
+    let numbers: Vec<i64> = vec![
+      811589153, 1623178306, -2434767459, 2434767459, -1623178306, 0, 3246356612
+    ];
+    let mixed_numbers = mix_numbers(&numbers, 10);
+    assert_eq!(
+      mixed_numbers,
+      vec![
+        0, -2434767459, 1623178306, 3246356612, -1623178306, 2434767459, 811589153
+      ]
+    );
+
+    let grove_coords = find_grove_coords(&mixed_numbers);
+    assert_eq!(grove_coords, 1623178306);
+
   }
 
   fn get_part_1_input() -> Vec<String> {
@@ -218,6 +183,4 @@ mod tests {
       "2".to_string(),
     ]
   }
-
-
 }
