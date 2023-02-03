@@ -22,7 +22,21 @@ fn solve_one(blueprints: &Vec<Blueprint>) -> u64 {
 }
 
 pub fn part_two() -> u64 {
-  0
+  let lines = read_chunks("day19.txt", "\n");
+  let blueprints = parse_input(&lines);
+  // too low 11275
+  solve_two(&blueprints)
+}
+
+fn solve_two(blueprints: &Vec<Blueprint>) -> u64 {
+  let first_three_blueprints = blueprints[0..=2].to_vec();
+
+  let product: usize = first_three_blueprints
+    .iter()
+    .map(|b| max_geodes_possible(b, 32))
+    .product();
+
+  product as u64
 }
 
 fn parse_input(lines: &Vec<String>) -> Vec<Blueprint> {
@@ -37,7 +51,42 @@ fn parse_input(lines: &Vec<String>) -> Vec<Blueprint> {
     .map(|s| s.replace(".", ""))
     .map(|s| s.split(" ").map(|p| p.to_string()).collect::<Vec<String>>())
     .map(|s| str_to_blueprint(&s))
+    .map(|b| fill_in_max_required(&b))
     .collect()
+}
+
+fn fill_in_max_required(blueprint: &Blueprint) -> Blueprint {
+  Blueprint {
+    id: blueprint.id,
+    ore_robot_cost: blueprint.ore_robot_cost.clone(),
+    clay_robot_cost: blueprint.clay_robot_cost.clone(),
+    obsidian_robot_cost: blueprint.obsidian_robot_cost.clone(),
+    geode_robot_cost: blueprint.geode_robot_cost.clone(),
+    max_robots_required: Quantity {
+      ore: max(
+        blueprint.ore_robot_cost.ore,
+        max(blueprint.clay_robot_cost.ore,
+            max(blueprint.obsidian_robot_cost.ore,
+                blueprint.geode_robot_cost.ore),
+        ),
+      ),
+      clay: max(
+        blueprint.ore_robot_cost.clay,
+        max(blueprint.clay_robot_cost.clay,
+            max(blueprint.obsidian_robot_cost.clay,
+                blueprint.geode_robot_cost.clay),
+        ),
+      ),
+      obsidian: max(
+        blueprint.ore_robot_cost.obsidian,
+        max(blueprint.obsidian_robot_cost.obsidian,
+            max(blueprint.obsidian_robot_cost.obsidian,
+                blueprint.geode_robot_cost.obsidian),
+        ),
+      ),
+      geode: 0,
+    },
+  }
 }
 
 fn str_to_blueprint(parts: &Vec<String>) -> Blueprint {
@@ -67,18 +116,37 @@ fn str_to_blueprint(parts: &Vec<String>) -> Blueprint {
       obsidian: parts.get(30).unwrap().parse().unwrap(),
       geode: 0,
     },
+    max_robots_required: Quantity { ore: 0, clay: 0, obsidian: 0, geode: 0 },
   }
 }
 
+#[derive(Clone, Hash)]
 struct State {
+  max_required_robots: Quantity,
   minute: usize,
   material: Quantity,
   robots: Quantity,
 }
 
+impl State {
+  fn score(&self) -> i64 {
+    self.minute as i64
+  }
+
+  fn to_string(&self) -> String {
+    format!("{} {} {}", self.minute, self.robots.to_string(), self.material.to_string())
+  }
+}
+
+impl Quantity {
+  fn to_string(&self) -> String {
+    format!("{} {} {} {}", self.ore, self.clay, self.obsidian, self.geode)
+  }
+}
+
 impl Ord for State {
   fn cmp(&self, other: &Self) -> Ordering {
-    self.material.geode.cmp(&other.material.geode)
+    self.score().cmp(&other.score())
   }
 }
 
@@ -99,12 +167,15 @@ impl PartialEq for State {
 impl Eq for State {}
 
 
-fn max_geodes_possible(blueprint: &Blueprint) -> usize {
+fn max_geodes_possible(blueprint: &Blueprint, total_minutes: usize) -> usize {
   let mut final_states: Vec<State> = Vec::new();
   let mut next_states: BinaryHeap<State> = BinaryHeap::new();
-  let mut max_geodes_per_min: HashMap<usize, usize> = HashMap::new();
+  let mut max_geodes_per_min: HashMap<usize, u64> = HashMap::new();
+  let mut state_seen: HashSet<String> = HashSet::new();
+
 
   next_states.push(State {
+    max_required_robots: blueprint.max_robots_required.clone(),
     minute: 0,
     material: Quantity { ore: 0, clay: 0, obsidian: 0, geode: 0 },
     robots: Quantity { ore: 1, clay: 0, obsidian: 0, geode: 0 },
@@ -112,27 +183,45 @@ fn max_geodes_possible(blueprint: &Blueprint) -> usize {
 
   while !next_states.is_empty() {
     let state = next_states.pop().unwrap();
-    if state.minute == 24 {
+    state_seen.insert(state.to_string());
+
+    if state.minute == total_minutes {
       final_states.push(state);
     } else {
       let states = step(blueprint, &state);
       let y = 0;
       for state in states {
-        let curr_max = max_geodes_per_min.get(&state.minute).or(Some(&0)).unwrap().clone();
-        let curr_geode_count = state.material.geode;
-        if curr_geode_count >= curr_max {
+        let curr_max_score = max_geodes_per_min.get(&state.minute).or(Some(&0)).unwrap().clone();
+        let curr_score = state.score();
+        // if curr_score >= curr_max_score
+        // if !state_seen.contains(&state)
+        if !state_seen.contains(&state.to_string())
+        {
           let curr_min = state.minute.clone();
+          // state_seen.insert(state.clone());
           next_states.push(state);
-          max_geodes_per_min.insert(curr_min, curr_geode_count.clone());
+          // max_geodes_per_min.insert(curr_min, curr_score);
         }
       }
     }
   }
 
-  final_states
+
+  let max_geodes_cracked = final_states
     .iter()
     .map(|s| s.material.geode)
-    .max().unwrap()
+    .max().unwrap();
+
+  let best_states: Vec<State> = final_states
+    .iter()
+    // .filter(|s| s.material.geode == max_geodes_cracked)
+    .filter(|s| s.robots.ore >= 2)
+    .map(|s| s.clone())
+    .collect();
+
+  let x = 0;
+
+  max_geodes_cracked
 }
 
 fn step(blueprint: &Blueprint, state: &State) -> Vec<State> {
@@ -144,6 +233,7 @@ fn step(blueprint: &Blueprint, state: &State) -> Vec<State> {
     && state.material.obsidian >= blueprint.geode_robot_cost.obsidian {
     built_geode_robot = true;
     let s = State {
+      max_required_robots: blueprint.max_robots_required.clone(),
       minute: state.minute + 1,
       material: Quantity {
         ore: (state.material.ore - blueprint.geode_robot_cost.ore) + state.robots.ore,
@@ -174,6 +264,7 @@ fn step(blueprint: &Blueprint, state: &State) -> Vec<State> {
       state.robots.obsidian < max_req_obsidian {
       built_robots += 1;
       let s = State {
+        max_required_robots: blueprint.max_robots_required.clone(),
         minute: state.minute + 1,
         material: Quantity {
           ore: (state.material.ore - blueprint.obsidian_robot_cost.ore) + state.robots.ore,
@@ -202,6 +293,7 @@ fn step(blueprint: &Blueprint, state: &State) -> Vec<State> {
     if state.material.ore >= blueprint.clay_robot_cost.ore && state.robots.clay < max_req_clay {
       built_robots += 1;
       let s = State {
+        max_required_robots: blueprint.max_robots_required.clone(),
         minute: state.minute + 1,
         material: Quantity {
           ore: (state.material.ore - blueprint.clay_robot_cost.ore) + state.robots.ore,
@@ -231,6 +323,7 @@ fn step(blueprint: &Blueprint, state: &State) -> Vec<State> {
     if state.material.ore >= blueprint.ore_robot_cost.ore && state.robots.ore < max_req_ore {
       built_robots += 1;
       let s = State {
+        max_required_robots: blueprint.max_robots_required.clone(),
         minute: state.minute + 1,
         material: Quantity {
           ore: (state.material.ore - blueprint.ore_robot_cost.ore) + state.robots.ore,
@@ -254,6 +347,7 @@ fn step(blueprint: &Blueprint, state: &State) -> Vec<State> {
   // if !built_any_robot {
   if built_robots < 3 && !built_geode_robot {
     let s = State {
+      max_required_robots: blueprint.max_robots_required.clone(),
       minute: state.minute + 1,
       material: Quantity {
         ore: state.material.ore + state.robots.ore,
@@ -277,18 +371,11 @@ fn step(blueprint: &Blueprint, state: &State) -> Vec<State> {
 
 
 fn find_quality_level_for_blueprint(blueprint: &Blueprint) -> usize {
-  let geodes = max_geodes_possible(blueprint);
+  let geodes = max_geodes_possible(blueprint, 24);
   geodes * blueprint.id
 }
 
-enum Material {
-  Ore,
-  Clay,
-  Obsidian,
-  Geode,
-}
-
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 struct Quantity {
   ore: usize,
   clay: usize,
@@ -296,12 +383,14 @@ struct Quantity {
   geode: usize,
 }
 
+#[derive(Clone)]
 struct Blueprint {
   id: usize,
   ore_robot_cost: Quantity,
   clay_robot_cost: Quantity,
   obsidian_robot_cost: Quantity,
   geode_robot_cost: Quantity,
+  max_robots_required: Quantity,
 }
 
 #[cfg(test)]
@@ -338,7 +427,7 @@ mod tests {
     let blueprints = parse_input(&input);
 
     let bp1 = blueprints.get(0).unwrap();
-    let geodes = max_geodes_possible(bp1);
+    let geodes = max_geodes_possible(bp1, 24);
     assert_eq!(geodes, 9);
   }
 
@@ -348,8 +437,28 @@ mod tests {
     let blueprints = parse_input(&input);
 
     let bp2 = blueprints.get(1).unwrap();
-    let geodes = max_geodes_possible(bp2);
+    let geodes = max_geodes_possible(bp2, 24);
     assert_eq!(geodes, 12);
+  }
+
+  #[test]
+  fn test_find_max_geodes_possible_part_2_example_1() {
+    let input = get_part_1_input();
+    let blueprints = parse_input(&input);
+
+    let bp1 = blueprints.get(0).unwrap();
+    let geodes = max_geodes_possible(bp1, 32);
+    assert_eq!(geodes, 56);
+  }
+
+  #[test]
+  fn test_find_max_geodes_possible_part_2_example_2() {
+    let input = get_part_1_input();
+    let blueprints = parse_input(&input);
+
+    let bp2 = blueprints.get(1).unwrap();
+    let geodes = max_geodes_possible(bp2, 32);
+    assert_eq!(geodes, 62);
   }
 
   #[test]

@@ -150,9 +150,9 @@ fn main() {
   }
 
   if day_to_solve == 0 || day_to_solve == 19 {
-    let solution_day19_part1 = day19::part_one();
-    println!("Day 19, part 1: Sum of quality scores: {}", solution_day19_part1);
+    // let solution_day19_part1 = day19::part_one();
+    // println!("Day 19, part 1: Sum of quality scores: {}", solution_day19_part1);
     let solution_day19_part2 = day19::part_two();
-    println!("Day 19, part 2: Exterior surface area: {}", solution_day19_part2);
+    println!("Day 19, part 2: Product of first 3 blueprints: {}", solution_day19_part2);
   }
 }
