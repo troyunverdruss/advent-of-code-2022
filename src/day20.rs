@@ -15,32 +15,101 @@ pub fn part_one() -> i64 {
   //6220 too low
 }
 
+#[derive(Clone)]
+struct Value {
+  number: i64,
+  position: usize,
+}
 
 fn mix_numbers(numbers: &Vec<i64>) -> Vec<i64> {
-  let mut deque = VecDeque::from_iter(numbers.clone());
-  for n in numbers {
-    while deque.front().unwrap() != n {
+  let mut deque = numbers
+    .iter()
+    .enumerate()
+    .map(|(i,v)| Value { number: *v, position: i})
+    .collect::<VecDeque<Value>>();
+
+  // let mut deque = VecDeque::from_iter(numbers.clone());
+  for curr_position in 0..(numbers.len()) {
+    while deque.front().unwrap().position != curr_position {
       deque.rotate_left(1);
     }
+
     let num = deque.pop_front().unwrap().clone();
-    let rotations = num % (numbers.len() as i64 - 1);
+    let rotations = num.number % (numbers.len() as i64 - 1);
     // let wraps = num / numbers.len() as i64;
     // let rotations = rotations + wraps;
     // assert!(rotations.abs() < (numbers.len()-1) as i64);
-    if rotations > 0 {
-      deque.rotate_left(rotations.abs() as usize);
+
+
+
+    if num.number > 0 {
+
+        // let tmp_num = deque.pop_front().unwrap();
+        deque.rotate_left(rotations.abs() as usize);
+        deque.push_front(num.clone());
+
     } else {
-      deque.rotate_right(rotations.abs() as usize);
+
+        // let tmp_num = deque.pop_front().unwrap();
+        deque.rotate_right(rotations.abs() as usize);
+        deque.push_front(num.clone());
+
     }
-    deque.push_front(num);
-    println!("P: {}, list: {:?}", num, deque);
+    // deque.push_front(num);
+    // println!("P: {}, list: {:?}", num, deque);
+
   }
 
-  while deque.front().unwrap() != &0 {
-    deque.rotate_left(1);
-  }
 
-  Vec::from_iter(deque)
+  // for n in numbers {
+  //   while deque.front().unwrap().number != &0 {
+  //     deque.rotate_left(1);
+  //   }
+  //
+  //   let orig_pos = deque.iter().position(|v| v == n).unwrap();
+  //
+  //   while deque.front().unwrap() != n {
+  //     deque.rotate_left(1);
+  //   }
+  //   let num = deque.front().unwrap().clone();
+  //   // let rotations = num % (numbers.len() as i64 - 1);
+  //   // let wraps = num / numbers.len() as i64;
+  //   // let rotations = rotations + wraps;
+  //   // assert!(rotations.abs() < (numbers.len()-1) as i64);
+  //
+  //
+  //
+  //   if num > 0 {
+  //     for _ in 0..num.abs() {
+  //       let tmp_num = deque.pop_front().unwrap();
+  //       deque.rotate_left(1);
+  //       deque.push_front(tmp_num);
+  //     }
+  //   } else {
+  //     for _ in 0..num.abs() {
+  //       let tmp_num = deque.pop_front().unwrap();
+  //       deque.rotate_right(1);
+  //       deque.push_front(tmp_num);
+  //     }
+  //   }
+  //   // deque.push_front(num);
+  //   // println!("P: {}, list: {:?}", num, deque);
+
+    while deque.front().unwrap().number != 0 {
+      deque.rotate_left(1);
+    }
+
+    // let final_pos = deque.iter().position(|v| v == n).unwrap();
+    // let expected_pos = (orig_pos as i64 + n) % numbers.len() as i64;
+    // // if *n > 0 {
+    //   assert_eq!(expected_pos, final_pos as i64);
+    // }
+  // }
+
+  deque
+    .iter()
+    .map(|v| v.number)
+    .collect()
 }
 
 fn find_grove_coords(mixed_numbers: &Vec<i64>) -> i64 {
@@ -98,7 +167,35 @@ mod tests {
 
     let grove_coords = find_grove_coords(&mixed_numbers);
 
-    assert_eq!(grove_coords, 3);
+    assert_eq!(grove_coords, 0);
+  }
+
+  #[test]
+  fn test_0_n1_n1_1() {
+    let numbers = vec![0, -1, -1, 1];
+    let mixed = mix_numbers(&numbers);
+    assert_eq!(
+      mixed,
+      vec![0, -1, 1, -1]
+    )
+  }
+
+  #[test]
+  fn test_3_1_0() {
+    let numbers = vec![3,1,0];
+    let mixed = mix_numbers(&numbers);
+    assert_eq!(
+      mixed,
+      vec![0, 3, 1]
+    )
+  }
+
+  #[test]
+  fn test_adding_8() {
+    let numbers = vec![1,2,-3,3,-2,0,8];
+    let mixed_numbers = mix_numbers(&numbers);
+    let grove_coords = find_grove_coords(&mixed_numbers);
+    assert_eq!(grove_coords, 7);
   }
 
   fn get_part_1_input() -> Vec<String> {
@@ -121,4 +218,6 @@ mod tests {
       "2".to_string(),
     ]
   }
+
+
 }
