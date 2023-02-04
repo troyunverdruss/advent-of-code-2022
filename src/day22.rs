@@ -47,7 +47,7 @@ fn process_instructions(grid: &HashMap<Point, char>, instructions: &Vec<String>)
     match instruction.parse::<i64>() {
       Ok(steps) => {
         for _ in 0..steps {
-          position = step(grid, &position, &direction);
+          position = step(grid, &position, &direction, wrap_2d);
         }
       }
       Err(_) => {
@@ -65,7 +65,13 @@ fn process_instructions(grid: &HashMap<Point, char>, instructions: &Vec<String>)
   (position, direction)
 }
 
-fn step(grid: &HashMap<Point, char>, position: &Point, direction: &Direction) -> Point {
+fn step<T>(
+  grid: &HashMap<Point, char>,
+  position: &Point,
+  direction: &Direction,
+  wrap: T
+) -> Point
+where T: Fn(&HashMap<Point, char>, &Point, &Direction) -> Point {
   let maybe_simple_next_position = *position + direction.step_point();
   if grid.contains_key(&maybe_simple_next_position) {
     if grid.get(&maybe_simple_next_position).unwrap() == &'#' {
@@ -74,19 +80,34 @@ fn step(grid: &HashMap<Point, char>, position: &Point, direction: &Direction) ->
       maybe_simple_next_position
     }
   } else {
-    let maybe_wrap_next_position = match direction {
-      Direction::Up => grid.keys().filter(|k| k.x == position.x).max_by(|a, b| a.y.cmp(&b.y)).unwrap(),
-      Direction::Down => grid.keys().filter(|k| k.x == position.x).min_by(|a, b| a.y.cmp(&b.y)).unwrap(),
-      Direction::Left => grid.keys().filter(|k| k.y == position.y).max_by(|a, b| a.x.cmp(&b.x)).unwrap(),
-      Direction::Right => grid.keys().filter(|k| k.y == position.y).min_by(|a, b| a.x.cmp(&b.x)).unwrap(),
-    };
+    let maybe_wrap_next_position = wrap(grid, position, direction);
 
     if grid.get(&maybe_wrap_next_position).unwrap() == &'#' {
       position.clone()
     } else {
-      maybe_wrap_next_position.clone()
+      maybe_wrap_next_position
     }
   }
+}
+
+fn wrap_2d(grid: &HashMap<Point, char>, position: &Point, direction: &Direction) -> Point {
+  match direction {
+    Direction::Up => grid.keys().filter(|k| k.x == position.x).max_by(|a, b| a.y.cmp(&b.y)).unwrap(),
+    Direction::Down => grid.keys().filter(|k| k.x == position.x).min_by(|a, b| a.y.cmp(&b.y)).unwrap(),
+    Direction::Left => grid.keys().filter(|k| k.y == position.y).max_by(|a, b| a.x.cmp(&b.x)).unwrap(),
+    Direction::Right => grid.keys().filter(|k| k.y == position.y).min_by(|a, b| a.x.cmp(&b.x)).unwrap(),
+  }.clone()
+}
+
+fn wrap_3d(grid: &HashMap<Point, char>, position: &Point, direction: &Direction) -> Point {
+  let is_small = grid.len() == 96;
+
+  match direction {
+    Direction::Up => grid.keys().filter(|k| k.x == position.x).max_by(|a, b| a.y.cmp(&b.y)).unwrap(),
+    Direction::Down => grid.keys().filter(|k| k.x == position.x).min_by(|a, b| a.y.cmp(&b.y)).unwrap(),
+    Direction::Left => grid.keys().filter(|k| k.y == position.y).max_by(|a, b| a.x.cmp(&b.x)).unwrap(),
+    Direction::Right => grid.keys().filter(|k| k.y == position.y).min_by(|a, b| a.x.cmp(&b.x)).unwrap(),
+  }.clone()
 }
 
 fn compute_password(position: Point, direction: Direction) -> i64 {
@@ -152,6 +173,17 @@ mod tests {
 
   #[test]
   fn test_part_1() {
+    let map_data = get_part_1_map_data();
+    let instructions = get_part_1_instructions();
+    let grid = parse_grid(&map_data);
+    let (position, direction) = process_instructions(&grid, &instructions);
+    let password = compute_password(position, direction);
+
+    assert_eq!(password, 6032);
+  }
+
+  #[test]
+  fn test_part_2() {
     let map_data = get_part_1_map_data();
     let instructions = get_part_1_instructions();
     let grid = parse_grid(&map_data);
