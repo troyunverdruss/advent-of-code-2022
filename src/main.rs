@@ -22,9 +22,10 @@ mod day18;
 mod day19;
 mod day20;
 mod day21;
+mod day22;
 
 fn main() {
-  let day_to_solve = 21;
+  let day_to_solve = 22;
 
   if day_to_solve == 0 || day_to_solve == 1 {
     let solution_day01_part1 = day01::part_one();
@@ -170,5 +171,12 @@ fn main() {
     println!("Day 21, part 1: Root yells: {}", solution_day21_part1);
     let solution_day21_part2 = day21::part_two();
     println!("Day 21, part 2: Value needed to make root equal: {}", solution_day21_part2);
+  }
+
+  if day_to_solve == 0 || day_to_solve == 22 {
+    let solution_day22_part1 = day22::part_one();
+    println!("Day 22, part 1: Final password (2d): {}", solution_day22_part1);
+    let solution_day22_part2 = day22::part_two();
+    println!("Day 22, part 2: Final password (3d): {}", solution_day22_part2);
   }
 }

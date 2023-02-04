@@ -112,7 +112,7 @@ fn find_point_for_value(grid: &HashMap<Point, char>, target: char) -> Point {
 
 
 
-fn lines_to_grid_char_val(lines: &Vec<String>) -> HashMap<Point, char> {
+pub fn lines_to_grid_char_val(lines: &Vec<String>) -> HashMap<Point, char> {
   let mut grid = HashMap::new();
 
   lines
