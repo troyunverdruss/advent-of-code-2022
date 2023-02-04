@@ -21,9 +21,10 @@ mod day17;
 mod day18;
 mod day19;
 mod day20;
+mod day21;
 
 fn main() {
-  let day_to_solve = 20;
+  let day_to_solve = 21;
 
   if day_to_solve == 0 || day_to_solve == 1 {
     let solution_day01_part1 = day01::part_one();
@@ -162,5 +163,12 @@ fn main() {
     println!("Day 20, part 1: Grove coordinates: {}", solution_day20_part1);
     let solution_day20_part2 = day20::part_two();
     println!("Day 20, part 2: Grove coordinates: {}", solution_day20_part2);
+  }
+
+  if day_to_solve == 0 || day_to_solve == 21 {
+    let solution_day21_part1 = day21::part_one();
+    println!("Day 21, part 1: Root yells: {}", solution_day21_part1);
+    let solution_day21_part2 = day21::part_two();
+    println!("Day 21, part 2: Value needed to make root equal: {}", solution_day21_part2);
   }
 }

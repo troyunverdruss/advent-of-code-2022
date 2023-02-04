@@ -1,8 +1,4 @@
-use std::cmp::{max, Ordering};
-use std::collections::{HashMap, HashSet, VecDeque, BinaryHeap};
-use std::ops::{Add, Index};
-use std::str::Split;
-
+use std::collections::VecDeque;
 
 use crate::utils::read_chunks;
 
@@ -61,7 +57,7 @@ fn find_grove_coords(mixed_numbers: &Vec<i64>) -> i64 {
   let coord_one = mixed_numbers.get((zero_index + 1000) % mixed_numbers.len()).unwrap();
   let coord_two = mixed_numbers.get((zero_index + 2000) % mixed_numbers.len()).unwrap();
   let coord_three = mixed_numbers.get((zero_index + 3000) % mixed_numbers.len()).unwrap();
-  println!("{} {} {} ", coord_one, coord_two, coord_three);
+  // println!("{} {} {} ", coord_one, coord_two, coord_three);
   coord_one + coord_two + coord_three
 }
 
@@ -148,19 +144,18 @@ mod tests {
   #[test]
   fn test_part_2() {
     let numbers: Vec<i64> = vec![
-      811589153, 1623178306, -2434767459, 2434767459, -1623178306, 0, 3246356612
+      811589153, 1623178306, -2434767459, 2434767459, -1623178306, 0, 3246356612,
     ];
     let mixed_numbers = mix_numbers(&numbers, 10);
     assert_eq!(
       mixed_numbers,
       vec![
-        0, -2434767459, 1623178306, 3246356612, -1623178306, 2434767459, 811589153
+        0, -2434767459, 1623178306, 3246356612, -1623178306, 2434767459, 811589153,
       ]
     );
 
     let grove_coords = find_grove_coords(&mixed_numbers);
     assert_eq!(grove_coords, 1623178306);
-
   }
 
   fn get_part_1_input() -> Vec<String> {
