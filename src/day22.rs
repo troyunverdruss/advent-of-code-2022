@@ -18,7 +18,7 @@ pub fn part_one() -> i64 {
     .map(|s| s.to_string())
     .collect::<Vec<String>>();
 
-  let (position, direction) = process_instructions(&grid, &instructions);
+  let (position, direction) = process_instructions(&grid, &instructions, true);
   let password = compute_password(position, direction);
 
   password
@@ -32,7 +32,13 @@ fn parse_grid(map_lines: &Vec<String>) -> HashMap<Point, char> {
     .collect()
 }
 
-fn process_instructions(grid: &HashMap<Point, char>, instructions: &Vec<String>) -> (Point, Direction) {
+fn process_instructions(grid: &HashMap<Point, char>, instructions: &Vec<String>, part_one: bool) -> (Point, Direction) {
+  let wrap_method = if part_one {
+    wrap_2d
+  } else {
+    wrap_3d
+  };
+
   let starting_y = 0;
   let starting_x = grid.keys()
     .filter(|p| p.y == starting_y)
@@ -47,7 +53,9 @@ fn process_instructions(grid: &HashMap<Point, char>, instructions: &Vec<String>)
     match instruction.parse::<i64>() {
       Ok(steps) => {
         for _ in 0..steps {
-          position = step(grid, &position, &direction, wrap_2d);
+          let (new_position, new_direction) = step(grid, &position, &direction, wrap_method);
+          position = new_position;
+          direction = new_direction;
         }
       }
       Err(_) => {
@@ -69,45 +77,50 @@ fn step<T>(
   grid: &HashMap<Point, char>,
   position: &Point,
   direction: &Direction,
-  wrap: T
-) -> Point
-where T: Fn(&HashMap<Point, char>, &Point, &Direction) -> Point {
+  wrap: T,
+) -> (Point, Direction)
+  where T: Fn(&HashMap<Point, char>, &Point, &Direction) -> (Point, Direction) {
   let maybe_simple_next_position = *position + direction.step_point();
   if grid.contains_key(&maybe_simple_next_position) {
     if grid.get(&maybe_simple_next_position).unwrap() == &'#' {
-      position.clone()
+      (position.clone(), direction.clone())
     } else {
-      maybe_simple_next_position
+      (maybe_simple_next_position, direction.clone())
     }
   } else {
-    let maybe_wrap_next_position = wrap(grid, position, direction);
+    let (maybe_wrap_next_position, maybe_new_direction) = wrap(grid, position, direction);
 
     if grid.get(&maybe_wrap_next_position).unwrap() == &'#' {
-      position.clone()
+      (position.clone(), direction.clone())
     } else {
-      maybe_wrap_next_position
+      (maybe_wrap_next_position, maybe_new_direction)
     }
   }
 }
 
-fn wrap_2d(grid: &HashMap<Point, char>, position: &Point, direction: &Direction) -> Point {
-  match direction {
+fn wrap_2d(grid: &HashMap<Point, char>, position: &Point, direction: &Direction) -> (Point, Direction) {
+  let new_position = match direction {
     Direction::Up => grid.keys().filter(|k| k.x == position.x).max_by(|a, b| a.y.cmp(&b.y)).unwrap(),
     Direction::Down => grid.keys().filter(|k| k.x == position.x).min_by(|a, b| a.y.cmp(&b.y)).unwrap(),
     Direction::Left => grid.keys().filter(|k| k.y == position.y).max_by(|a, b| a.x.cmp(&b.x)).unwrap(),
     Direction::Right => grid.keys().filter(|k| k.y == position.y).min_by(|a, b| a.x.cmp(&b.x)).unwrap(),
-  }.clone()
+  }.clone();
+
+  (new_position, direction.clone())
 }
 
-fn wrap_3d(grid: &HashMap<Point, char>, position: &Point, direction: &Direction) -> Point {
+fn wrap_3d(grid: &HashMap<Point, char>, position: &Point, direction: &Direction) -> (Point, Direction) {
   let is_small = grid.len() == 96;
 
-  match direction {
+  let new_position = match direction {
     Direction::Up => grid.keys().filter(|k| k.x == position.x).max_by(|a, b| a.y.cmp(&b.y)).unwrap(),
     Direction::Down => grid.keys().filter(|k| k.x == position.x).min_by(|a, b| a.y.cmp(&b.y)).unwrap(),
     Direction::Left => grid.keys().filter(|k| k.y == position.y).max_by(|a, b| a.x.cmp(&b.x)).unwrap(),
     Direction::Right => grid.keys().filter(|k| k.y == position.y).min_by(|a, b| a.x.cmp(&b.x)).unwrap(),
-  }.clone()
+  }.clone();
+
+  // todo fix this method
+  (new_position, direction.clone())
 }
 
 fn compute_password(position: Point, direction: Direction) -> i64 {
@@ -115,7 +128,7 @@ fn compute_password(position: Point, direction: Direction) -> i64 {
   (1000 * (1 + position.y)) + (4 * (1 + position.x)) + direction.value()
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Direction {
   Up,
   Down,
@@ -176,7 +189,7 @@ mod tests {
     let map_data = get_part_1_map_data();
     let instructions = get_part_1_instructions();
     let grid = parse_grid(&map_data);
-    let (position, direction) = process_instructions(&grid, &instructions);
+    let (position, direction) = process_instructions(&grid, &instructions, true);
     let password = compute_password(position, direction);
 
     assert_eq!(password, 6032);
@@ -187,10 +200,10 @@ mod tests {
     let map_data = get_part_1_map_data();
     let instructions = get_part_1_instructions();
     let grid = parse_grid(&map_data);
-    let (position, direction) = process_instructions(&grid, &instructions);
+    let (position, direction) = process_instructions(&grid, &instructions, false);
     let password = compute_password(position, direction);
 
-    assert_eq!(password, 6032);
+    assert_eq!(password, 5031);
   }
 
   #[test]
