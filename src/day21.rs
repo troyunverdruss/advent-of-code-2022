@@ -96,10 +96,11 @@ fn math_solver(target_value: i64, equation: String) -> i64 {
     let operator = caps[2].to_string();
     let value = caps[1].to_string().parse::<i64>().unwrap();
     match operator.as_str() {
+      // todo
       "+" => math_solver(target_value - value, remaining_equation),
-      "-" => math_solver(target_value + value, remaining_equation),
+      "-" => math_solver(-1 * (target_value - value), remaining_equation),
       "*" => math_solver(target_value / value, remaining_equation),
-      "/" => math_solver(target_value * value, remaining_equation),
+      "/" => math_solver( value / target_value, remaining_equation),
       _ => panic!("bad operator found")
     }
   } else {
@@ -117,9 +118,9 @@ fn math_solver(target_value: i64, equation: String) -> i64 {
       match parts[1] {
         // todo
         "+" => target_value - parts[0].parse::<i64>().unwrap(),
-        "-" => target_value + parts[0].parse::<i64>().unwrap(),
+        "-" => -1 * (target_value - parts[0].parse::<i64>().unwrap()),
         "*" => target_value / parts[0].parse::<i64>().unwrap(),
-        "/" => target_value * parts[0].parse::<i64>().unwrap(),
+        "/" =>  parts[0].parse::<i64>().unwrap() / target_value,
         _ => panic!("bad operator found")
       }
     }
@@ -225,11 +226,35 @@ mod tests {
   }
 
   #[test]
-  fn test_solve_expr_with_humn_first() {
+  fn test_solve_expr_with_humn_sec_1_subtract() {
     let target_value = 1;
     let equation = "(5 + (2 - humn))".to_string();
     let res = math_solver(target_value, equation);
     assert_eq!(res, 6);
+  }
+
+  #[test]
+  fn test_solve_expr_with_humn_sec_2_subtract() {
+    let target_value = 1;
+    let equation = "(5 - (2 - humn))".to_string();
+    let res = math_solver(target_value, equation);
+    assert_eq!(res, -2);
+  }
+
+  #[test]
+  fn test_solve_expr_with_humn_sec_1_divide() {
+    let target_value = 1;
+    let equation = "(5 + (8 / humn))".to_string();
+    let res = math_solver(target_value, equation);
+    assert_eq!(res, -2);
+  }
+
+  #[test]
+  fn test_solve_expr_with_humn_sec_2_divide() {
+    let target_value = 1;
+    let equation = "(4 / (8 / humn))".to_string();
+    let res = math_solver(target_value, equation);
+    assert_eq!(res, 2);
   }
 
   #[test]
