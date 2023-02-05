@@ -49,7 +49,7 @@ fn process_instructions(grid: &HashMap<Point, char>, instructions: &Vec<String>,
   let mut direction = Direction::Right;
 
   for instruction in instructions {
-    println!("Start: {:?}, {:?}", position, direction);
+
     match instruction.parse::<i64>() {
       Ok(steps) => {
         for _ in 0..steps {
@@ -66,8 +66,7 @@ fn process_instructions(grid: &HashMap<Point, char>, instructions: &Vec<String>,
         }
       }
     }
-    println!("End: {:?}, {:?}", position, direction);
-    println!();
+
   }
 
   (position, direction)
@@ -89,7 +88,10 @@ fn step<T>(
     }
   } else {
     let (maybe_wrap_next_position, maybe_new_direction) = wrap(grid, position, direction);
-
+    let grid_value = grid.get(&maybe_wrap_next_position);
+    if grid_value.is_none() {
+      let x = 0;
+    }
     if grid.get(&maybe_wrap_next_position).unwrap() == &'#' {
       (position.clone(), direction.clone())
     } else {
@@ -109,18 +111,115 @@ fn wrap_2d(grid: &HashMap<Point, char>, position: &Point, direction: &Direction)
   (new_position, direction.clone())
 }
 
-fn wrap_3d(grid: &HashMap<Point, char>, position: &Point, direction: &Direction) -> (Point, Direction) {
-  let is_small = grid.len() == 96;
+fn wrap_3d(_grid: &HashMap<Point, char>, position: &Point, direction: &Direction) -> (Point, Direction) {
+  println!("Start: {:?}, {:?}", position, direction);
+  let default_new_position = Point { x: -1, y: -1 };
+  let mut new_position = default_new_position.clone();
+  let mut new_direction = Direction::Up;
 
-  let new_position = match direction {
-    Direction::Up => grid.keys().filter(|k| k.x == position.x).max_by(|a, b| a.y.cmp(&b.y)).unwrap(),
-    Direction::Down => grid.keys().filter(|k| k.x == position.x).min_by(|a, b| a.y.cmp(&b.y)).unwrap(),
-    Direction::Left => grid.keys().filter(|k| k.y == position.y).max_by(|a, b| a.x.cmp(&b.x)).unwrap(),
-    Direction::Right => grid.keys().filter(|k| k.y == position.y).min_by(|a, b| a.x.cmp(&b.x)).unwrap(),
-  }.clone();
+  match direction {
+    Direction::Up => {
+      if position.y == 0 && position.x >= 50 && position.x < 100 {
+        // i
+        new_direction = Direction::Right;
+        new_position = Point { x: 0, y: position.x + 100 };
+      } else if position.y == 0 && position.x >= 100 && position.x < 150 {
+        // h
+        new_direction = Direction::Up;
+        new_position = Point { x: position.x - 100, y: 199 }
+      } else if position.y == 100 && position.x >= 0 && position.x < 50 {
+        // d
+        new_direction = Direction::Right;
+        new_position = Point { x: 50, y: position.x + 50 }
+      }
+    }
+    Direction::Down => {
+      if position.y == 199 && position.x >= 0 && position.x < 50 {
+        // h
+        new_direction = Direction::Down;
+        new_position = Point { x: position.x + 100, y: 0 }
+      } else if position.y == 149 && position.x >= 50 && position.x < 100 {
+        // g
+        new_direction = Direction::Left;
+        new_position = Point { x: 49, y: position.x + 100 }
+      } else if position.y == 49 && position.x >= 100 && position.x < 150 {
+        // b
+        new_direction = Direction::Left;
+        new_position = Point { x: 99, y: position.x - 50 }
+      }
+    }
+    Direction::Left => {
+      if position.x == 50 && position.y >= 0 && position.y < 50 {
+        // k
+        new_direction = Direction::Right;
+        // y = 0, y = 150
+        // y = 50, y = 100
+        // 100 + (50 - y)
+        new_position = Point { x: 0, y: 100 + (50 - position.y) }
+      } else if position.x == 50 && position.y >= 50 && position.y < 100 {
+        // d
+        new_direction = Direction::Down;
+        // y = 50, x = 0
+        // y = 100, x = 50
+        new_position = Point { x: position.y - 50, y: 100 }
+      } else if position.x == 0 && position.y >= 100 && position.y < 150 {
+        // k
+        new_direction = Direction::Right;
+        //  y = 100, y = 49
+        // y = 101, y = 48
+        // 148, 1
+        // y = 149, y = 0
+        // y - 100 + 49
 
-  // todo fix this method
-  (new_position, direction.clone())
+        // 49 - (y - 100)
+        new_position = Point { x: 50, y: 49 - (position.y - 100) }
+      } else if position.x == 0 && position.y >= 150 && position.y < 200 {
+        // i
+        new_direction = Direction::Down;
+        // y = 150, x = 50
+        // y = 199, x = 99
+        new_position = Point { x: position.y - 100, y: 0 }
+      }
+    }
+    Direction::Right => {
+      if position.x == 149 && position.y >= 0 && position.y < 50 {
+        // L
+        new_direction = Direction::Left;
+        // y = 0, y = 149
+        // y = 49, y = 100
+        // 100 + (49 - y)
+        new_position = Point { x: 99, y: 100 + (49 - position.y) }
+      } else if position.x == 99 && position.y >= 50 && position.y < 100 {
+        // b
+        new_direction = Direction::Up;
+        // y = 50, x = 100
+        // y = 99, x = 149
+        new_position = Point { x: position.y + 50, y: 49 }
+      } else if position.x == 99 && position.y >= 100 && position.y < 150 {
+        // L
+        new_direction = Direction::Left;
+        // y = 100, y = 49
+        // y = 149, y = 0
+        // 49 - (y - 100)
+        new_position = Point { x: 149, y: 49 - (position.y - 100) }
+      } else if position.x == 49 && position.y >= 150 && position.y < 200 {
+        // G
+        new_direction = Direction::Up;
+        // y = 150, x = 50
+        // y = 199, x = 99
+        // y - 100
+        new_position = Point { x: position.y - 100, y: 149 }
+      }
+    }
+  };
+
+  if new_position == default_new_position {
+    panic!("never figured out where to go, uh oh!")
+  }
+
+  println!("End: {:?}, {:?}", new_position, new_direction);
+  println!();
+  (new_position, new_direction)
 }
 
 fn compute_password(position: Point, direction: Direction) -> i64 {
@@ -175,7 +274,23 @@ impl Direction {
 }
 
 pub fn part_two() -> i64 {
-  0
+  let raw_input = read_chunks("day22.txt", "\n\n");
+  let map_lines = raw_input.get(0).unwrap()
+    .split("\n")
+    .map(|l| l.to_string())
+    .collect::<Vec<String>>();
+  let grid = parse_grid(&map_lines);
+  let instructions = raw_input.get(1).unwrap().trim()
+    .replace("R", " R ")
+    .replace("L", " L ")
+    .split(" ")
+    .map(|s| s.to_string())
+    .collect::<Vec<String>>();
+
+  let (position, direction) = process_instructions(&grid, &instructions, false);
+  let password = compute_password(position, direction);
+
+  password
 }
 
 

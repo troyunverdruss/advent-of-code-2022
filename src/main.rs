@@ -174,9 +174,11 @@ fn main() {
   }
 
   if day_to_solve == 0 || day_to_solve == 22 {
-    let solution_day22_part1 = day22::part_one();
-    println!("Day 22, part 1: Final password (2d): {}", solution_day22_part1);
+    // let solution_day22_part1 = day22::part_one();
+    // println!("Day 22, part 1: Final password (2d): {}", solution_day22_part1);
     let solution_day22_part2 = day22::part_two();
     println!("Day 22, part 2: Final password (3d): {}", solution_day22_part2);
+
+    // 90362 too low
   }
 }
