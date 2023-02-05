@@ -1,7 +1,5 @@
 use std::collections::HashMap;
-use std::ptr::eq;
-use eval::{eval, to_value};
-use eqsolver::single_variable::Secant;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -17,7 +15,6 @@ pub fn part_two() -> i64 {
   let lines = read_chunks("day21.txt", "\n");
   let monkeys = parse_input(&lines);
   solve_two(&monkeys)
-  // too high 10709027770021
 }
 
 fn solve_two(monkeys: &HashMap<String, String>) -> i64 {
@@ -25,23 +22,13 @@ fn solve_two(monkeys: &HashMap<String, String>) -> i64 {
   let orig_left_value = resolver(&monkeys, &root_monkey_left.to_string());
   let orig_right_value = resolver(&monkeys, &root_monkey_right.to_string());
 
-  let num: i64 = monkeys.get("humn").unwrap().parse().unwrap();
-  assert_ne!(num, 1);
-  assert_ne!(num, 100_000_000);
-
   let mut monkeys_1 = monkeys.clone();
   monkeys_1.insert("humn".to_string(), "1".to_string());
   let new_left_value_1 = resolver(&monkeys_1, &root_monkey_left.to_string());
-  let new_right_value_2 = resolver(&monkeys_1, &root_monkey_right.to_string());
 
-
-  assert!(new_left_value_1 == orig_left_value || new_right_value_2 == orig_right_value);
-
-  let mut monkeys_2 = monkeys.clone();
-  // monkeys_2.insert("humn".to_string(), "1000000000000".to_string());
+  let monkeys_2 = monkeys.clone();
   let new_left_value_2 = variable_resolver(&monkeys_2, &root_monkey_left.to_string());
   let new_right_value_2 = variable_resolver(&monkeys_2, &root_monkey_right.to_string());
-  // assert!(new_left_value_2 == orig_left_value || new_right_value_2 == orig_right_value);
 
 
   let (target_value, equation) = if new_left_value_1 == orig_left_value {
@@ -50,20 +37,7 @@ fn solve_two(monkeys: &HashMap<String, String>) -> i64 {
     (orig_right_value, new_left_value_2)
   };
 
-  let result = math_solver(target_value, equation);
-
-
-  let x = 0;
-  if new_left_value_1 != orig_left_value {
-    // Need to solve for the left value with various humn options
-    // Right value is the target
-    let f = |humn: f64| new_left_value_1 - orig_right_value;
-  } else {
-    // Need to solve for the right value with various humn options
-    // Left value is the target
-  }
-
-  result
+  math_solver(target_value, equation)
 }
 
 fn math_solver(target_value: i64, equation: String) -> i64 {
@@ -206,8 +180,9 @@ fn parse_input(lines: &Vec<String>) -> HashMap<String, String> {
 #[cfg(test)]
 mod tests {
   use lazy_static::lazy_static;
-  use crate::day21::{math_solver, parse_input, solve_one, solve_two};
   use regex::Regex;
+
+  use crate::day21::{math_solver, parse_input, solve_one, solve_two};
 
   #[test]
   fn test_part_1() {

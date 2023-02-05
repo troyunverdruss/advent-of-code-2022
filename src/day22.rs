@@ -11,12 +11,7 @@ pub fn part_one() -> i64 {
     .map(|l| l.to_string())
     .collect::<Vec<String>>();
   let grid = parse_grid(&map_lines);
-  let instructions = raw_input.get(1).unwrap().trim()
-    .replace("R", " R ")
-    .replace("L", " L ")
-    .split(" ")
-    .map(|s| s.to_string())
-    .collect::<Vec<String>>();
+  let instructions = parse_instructions(raw_input);
 
   let (position, direction) = process_instructions(&grid, &instructions, true);
   let password = compute_password(position, direction);
@@ -24,10 +19,19 @@ pub fn part_one() -> i64 {
   password
 }
 
+fn parse_instructions(raw_input: Vec<String>) -> Vec<String> {
+  raw_input.get(1).unwrap().trim()
+    .replace("R", " R ")
+    .replace("L", " L ")
+    .split(" ")
+    .map(|s| s.to_string())
+    .collect::<Vec<String>>()
+}
+
 fn parse_grid(map_lines: &Vec<String>) -> HashMap<Point, char> {
   lines_to_grid_char_val(&map_lines)
     .iter()
-    .filter(|(k, v)| v != &&' ')
+    .filter(|(_k, v)| v != &&' ')
     .map(|(k, v)| (*k, *v))
     .collect()
 }
@@ -88,10 +92,6 @@ fn step<T>(
     }
   } else {
     let (maybe_wrap_next_position, maybe_new_direction) = wrap(grid, position, direction);
-    let grid_value = grid.get(&maybe_wrap_next_position);
-    if grid_value.is_none() {
-      let x = 0;
-    }
     if grid.get(&maybe_wrap_next_position).unwrap() == &'#' {
       (position.clone(), direction.clone())
     } else {
@@ -112,7 +112,7 @@ fn wrap_2d(grid: &HashMap<Point, char>, position: &Point, direction: &Direction)
 }
 
 fn wrap_3d(_grid: &HashMap<Point, char>, position: &Point, direction: &Direction) -> (Point, Direction) {
-  println!("Start: {:?}, {:?}", position, direction);
+  // println!("Start: {:?}, {:?}", position, direction);
   let default_new_position = Point { x: -1, y: -1 };
   let mut new_position = default_new_position.clone();
   let mut new_direction = Direction::Up;
@@ -152,10 +152,10 @@ fn wrap_3d(_grid: &HashMap<Point, char>, position: &Point, direction: &Direction
       if position.x == 50 && position.y >= 0 && position.y < 50 {
         // k
         new_direction = Direction::Right;
-        // y = 0, y = 150
-        // y = 50, y = 100
-        // 100 + (50 - y)
-        new_position = Point { x: 0, y: 100 + (50 - position.y) }
+        // y = 0, y = 149
+        // y = 49, y = 100
+        // 100 + (49 - y)
+        new_position = Point { x: 0, y: 100 + (49 - position.y) }
       } else if position.x == 50 && position.y >= 50 && position.y < 100 {
         // d
         new_direction = Direction::Down;
@@ -217,8 +217,8 @@ fn wrap_3d(_grid: &HashMap<Point, char>, position: &Point, direction: &Direction
     panic!("never figured out where to go, uh oh!")
   }
 
-  println!("End: {:?}, {:?}", new_position, new_direction);
-  println!();
+  // println!("End: {:?}, {:?}", new_position, new_direction);
+  // println!();
   (new_position, new_direction)
 }
 
@@ -227,7 +227,7 @@ fn compute_password(position: Point, direction: Direction) -> i64 {
   (1000 * (1 + position.y)) + (4 * (1 + position.x)) + direction.value()
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Direction {
   Up,
   Down,
@@ -280,12 +280,7 @@ pub fn part_two() -> i64 {
     .map(|l| l.to_string())
     .collect::<Vec<String>>();
   let grid = parse_grid(&map_lines);
-  let instructions = raw_input.get(1).unwrap().trim()
-    .replace("R", " R ")
-    .replace("L", " L ")
-    .split(" ")
-    .map(|s| s.to_string())
-    .collect::<Vec<String>>();
+  let instructions = parse_instructions(raw_input);
 
   let (position, direction) = process_instructions(&grid, &instructions, false);
   let password = compute_password(position, direction);
@@ -296,8 +291,10 @@ pub fn part_two() -> i64 {
 
 #[cfg(test)]
 mod tests {
+  use eqsolver::nalgebra::wrap;
   use crate::day08::Point;
-  use crate::day22::{compute_password, Direction, parse_grid, process_instructions};
+  use crate::day22::{compute_password, Direction, parse_grid, process_instructions, wrap_3d};
+  use crate::utils::read_chunks;
 
   #[test]
   fn test_part_1() {
@@ -325,6 +322,204 @@ mod tests {
   fn test_compute_password() {
     let password = compute_password(Point { x: 7, y: 5 }, Direction::Right);
     assert_eq!(password, 6032)
+  }
+
+  #[test]
+  fn verify_3d_wrapping() {
+    let raw_input = read_chunks("day22.txt", "\n\n");
+    let map_lines = raw_input.get(0).unwrap()
+      .split("\n")
+      .map(|l| l.to_string())
+      .collect::<Vec<String>>();
+    let grid = parse_grid(&map_lines);
+    let instructions = raw_input.get(1).unwrap().trim()
+      .replace("R", " R ")
+      .replace("L", " L ")
+      .split(" ")
+      .map(|s| s.to_string())
+      .collect::<Vec<String>>();
+
+    // top I
+    let p = Point {x: 50, y: 0};
+    let d = Direction::Up;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 0, y: 150});
+    assert_eq!(dd, Direction::Right);
+
+    let p = Point {x: 99, y: 0};
+    let d = Direction::Up;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 0, y: 199});
+    assert_eq!(dd, Direction::Right);
+
+    // top H
+    let p = Point {x: 100, y: 0};
+    let d = Direction::Up;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 0, y: 199});
+    assert_eq!(dd, Direction::Up);
+
+    let p = Point {x: 149, y: 0};
+    let d = Direction::Up;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 49, y: 199});
+    assert_eq!(dd, Direction::Up);
+
+    // rightmost L
+    let p = Point {x: 149, y: 0};
+    let d = Direction::Right;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 99, y: 149});
+    assert_eq!(dd, Direction::Left);
+
+    let p = Point {x: 149, y: 49};
+    let d = Direction::Right;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 99, y: 100});
+    assert_eq!(dd, Direction::Left);
+
+    // upper B
+    let p = Point {x: 100, y: 49};
+    let d = Direction::Down;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 99, y: 50});
+    assert_eq!(dd, Direction::Left);
+
+    let p = Point {x: 149, y: 49};
+    let d = Direction::Down;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 99, y: 99});
+    assert_eq!(dd, Direction::Left);
+
+    // middle B
+    let p = Point {x: 99, y: 50};
+    let d = Direction::Right;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 100, y: 49});
+    assert_eq!(dd, Direction::Up);
+
+    let p = Point {x: 99, y: 99};
+    let d = Direction::Right;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 149, y: 49});
+    assert_eq!(dd, Direction::Up);
+
+    // middle L
+    let p = Point {x: 99, y: 100};
+    let d = Direction::Right;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 149, y: 49});
+    assert_eq!(dd, Direction::Left);
+
+    let p = Point {x: 99, y: 149};
+    let d = Direction::Right;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 149, y: 0});
+    assert_eq!(dd, Direction::Left);
+
+    // middle G
+    let p = Point {x: 50, y: 149};
+    let d = Direction::Down;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 49, y: 150});
+    assert_eq!(dd, Direction::Left);
+
+    let p = Point {x: 99, y: 149};
+    let d = Direction::Down;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 49, y: 199});
+    assert_eq!(dd, Direction::Left);
+
+    // bottom G
+    let p = Point {x: 49, y: 150};
+    let d = Direction::Right;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 50, y: 149});
+    assert_eq!(dd, Direction::Up);
+
+    let p = Point {x: 49, y: 199};
+    let d = Direction::Right;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 99, y: 149});
+    assert_eq!(dd, Direction::Up);
+
+    // bottom H
+    let p = Point {x: 0, y: 199};
+    let d = Direction::Down;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 100, y: 0});
+    assert_eq!(dd, Direction::Down);
+
+    let p = Point {x: 49, y: 199};
+    let d = Direction::Down;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 149, y: 0});
+    assert_eq!(dd, Direction::Down);
+
+    // bottom left I
+    let p = Point {x: 0, y: 150};
+    let d = Direction::Left;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 50, y: 0});
+    assert_eq!(dd, Direction::Down);
+
+    let p = Point {x: 0, y: 199};
+    let d = Direction::Left;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 99, y: 0});
+    assert_eq!(dd, Direction::Down);
+
+    // left bottom K
+    let p = Point {x: 0, y: 100};
+    let d = Direction::Left;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 50, y: 49});
+    assert_eq!(dd, Direction::Right);
+
+    let p = Point {x: 0, y: 149};
+    let d = Direction::Left;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 50, y: 0});
+    assert_eq!(dd, Direction::Right);
+
+    // left D
+    let p = Point {x: 0, y: 100};
+    let d = Direction::Up;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 50, y: 50});
+    assert_eq!(dd, Direction::Right);
+
+    let p = Point {x: 49, y: 100};
+    let d = Direction::Up;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 50, y: 99});
+    assert_eq!(dd, Direction::Right);
+
+    // middle D
+    let p = Point {x: 50, y: 50};
+    let d = Direction::Left;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 0, y: 100});
+    assert_eq!(dd, Direction::Down);
+
+    let p = Point {x: 50, y: 99};
+    let d = Direction::Left;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 49, y: 100});
+    assert_eq!(dd, Direction::Down);
+
+    // top K
+    let p = Point {x: 50, y: 0};
+    let d = Direction::Left;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 0, y: 149});
+    assert_eq!(dd, Direction::Right);
+
+    let p = Point {x: 50, y: 49};
+    let d = Direction::Left;
+    let (pp, dd) = wrap_3d(&grid, &p, &d);
+    assert_eq!(pp, Point {x: 0, y: 100});
+    assert_eq!(dd, Direction::Right);
   }
 
 
