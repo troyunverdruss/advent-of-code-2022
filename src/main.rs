@@ -185,6 +185,6 @@ fn main() {
     let solution_day23_part1 = day23::part_one();
     println!("Day 23, part 1: Empty ground tiles: {}", solution_day23_part1);
     let solution_day23_part2 = day23::part_two();
-    println!("Day 23, part 2: Final password (3d): {}", solution_day23_part2);
+    println!("Day 23, part 2: ????: {}", solution_day23_part2);
   }
 }
