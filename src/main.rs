@@ -24,9 +24,10 @@ mod day20;
 mod day21;
 mod day22;
 mod day23;
+mod day24;
 
 fn main() {
-  let day_to_solve = 23;
+  let day_to_solve = 24;
 
   if day_to_solve == 0 || day_to_solve == 1 {
     let solution_day01_part1 = day01::part_one();
@@ -186,5 +187,12 @@ fn main() {
     println!("Day 23, part 1: Empty ground tiles: {}", solution_day23_part1);
     let solution_day23_part2 = day23::part_two();
     println!("Day 23, part 2: ????: {}", solution_day23_part2);
+  }
+
+  if day_to_solve == 0 || day_to_solve == 24 {
+    let solution_day24_part1 = day24::part_one();
+    println!("Day 24, part 1: Empty ground tiles: {}", solution_day24_part1);
+    let solution_day24_part2 = day24::part_two();
+    println!("Day 24, part 2: ????: {}", solution_day24_part2);
   }
 }
