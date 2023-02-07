@@ -1,24 +1,91 @@
+use std::cmp::min;
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::day08::Point;
 use crate::day12::lines_to_grid_char_val;
 use crate::utils::read_chunks;
 
-pub fn part_one() -> i64 {
+pub fn part_one() -> u64 {
   let input = read_chunks("day24.txt", "\n");
   let grid = lines_to_grid_char_val(&input);
   solve_one(&grid)
 }
 
-fn solve_one(grid: &HashMap<Point, char>) -> i64 {
+fn solve_one(grid: &HashMap<Point, char>) -> u64 {
   let (start, end) = get_start_end(grid);
   let walls = get_walls(grid);
   let blizzards = get_blizzards(grid);
-
   let all_indexed_blizzard_state_locations = index_all_blizzard_state_locations(&walls, &blizzards);
 
+  let mut to_visit = VecDeque::new();
+  to_visit.push_back(State { steps: 0, position: start.clone() });
+  let mut visited = HashSet::new();
+
+  let default_path_upper_bound = 1_000_000_000_000;
+  let mut shortest_path: u64 = default_path_upper_bound;
+
+  while !to_visit.is_empty() {
+    let curr = to_visit.pop_front().unwrap();
+    if curr.position == end {
+      shortest_path = min(shortest_path, curr.steps as u64);
+    }
+    if curr.steps <= shortest_path as usize {
+      let maybe_next_positions = next_step_vectors()
+        .iter()
+        .map(|v| curr.position + *v)
+        .collect::<Vec<Point>>();
+      let next_blizzard_positions = all_indexed_blizzard_state_locations
+        .get(&((curr.steps + 1) % all_indexed_blizzard_state_locations.len())).unwrap();
+
+      maybe_next_positions
+        .iter()
+        .for_each(|p| {
+          let is_valid = !next_blizzard_positions.contains(p) && !walls.contains(p) && p.y >= 0;
+
+          if is_valid {
+            let next_state = State { steps: curr.steps + 1, position: p.clone() };
+            let normalized_next_state = normalize_state(
+              all_indexed_blizzard_state_locations.len(),
+              next_state,
+            );
+            if !visited.contains(&normalized_next_state) && !to_visit.contains(&next_state) {
+              to_visit.push_back(next_state)
+            }
+            visited.insert(normalize_state(all_indexed_blizzard_state_locations.len(), curr));
+          }
+        })
+    }
+  }
+
+  if shortest_path == default_path_upper_bound {
+    panic!("never found a path");
+  }
+
   let x = 0;
-  0
+  shortest_path
+}
+
+fn normalize_state(blizzard_states: usize, next_state: State) -> State {
+  State {
+    steps: next_state.steps % blizzard_states,
+    position: next_state.position.clone(),
+  }
+}
+
+fn next_step_vectors() -> Vec<Point> {
+  vec![
+    Point { x: 0, y: 0 },
+    Point { x: -1, y: 0 },
+    Point { x: 1, y: 0 },
+    Point { x: 0, y: -1 },
+    Point { x: 0, y: 1 },
+  ]
+}
+
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+struct State {
+  steps: usize,
+  position: Point,
 }
 
 fn index_all_blizzard_state_locations(walls: &HashSet<Point>, blizzards: &Vec<Blizzard>) -> HashMap<usize, HashSet<Point>> {
