@@ -11,22 +11,48 @@ pub fn part_one() -> i64 {
   solve_one(&grid)
 }
 
+pub fn part_two() -> i64 {
+  let input = read_chunks("day23.txt", "\n");
+  let grid = lines_to_grid_char_val(&input);
+  solve_two(&grid)
+}
+
 fn solve_one(grid: &HashMap<Point, char>) -> i64 {
   let mut next_grid = grid.clone();
   println!("initial state");
-  dbg_print_grid(&next_grid);
+  // dbg_print_grid(&next_grid);
   let mut directions = VecDeque::from_iter(vec![North, South, West, East]);
 
 
-  for i in 0..10 {
+  for _i in 0..10 {
     let (_stable, updated_grid) = step(&next_grid, &directions);
-    println!("iteration {}", i);
+    // println!("iteration {}", i);
     next_grid = updated_grid;
-    dbg_print_grid(&next_grid);
+    // dbg_print_grid(&next_grid);
     directions.rotate_left(1);
   }
 
   compute_empty_tiles(&next_grid)
+}
+
+fn solve_two(grid: &HashMap<Point, char>) -> i64 {
+  let mut next_grid = grid.clone();
+  println!("initial state");
+  // dbg_print_grid(&next_grid);
+  let mut directions = VecDeque::from_iter(vec![North, South, West, East]);
+  let mut stable = false;
+  let mut round = 0;
+  while !stable {
+    round += 1;
+    let (updated_stable, updated_grid) = step(&next_grid, &directions);
+    // println!("iteration {}", i);
+    next_grid = updated_grid;
+    stable = updated_stable;
+    // dbg_print_grid(&next_grid);
+    directions.rotate_left(1);
+  }
+
+  round
 }
 
 #[allow(dead_code)]
@@ -153,17 +179,12 @@ impl Direction {
   }
 }
 
-pub fn part_two() -> i64 {
-  0
-}
-
-
 #[cfg(test)]
 mod tests {
   use std::cmp::min;
   use std::collections::VecDeque;
   use crate::day12::lines_to_grid_char_val;
-  use crate::day23::{compute_empty_tiles, dbg_print_grid, solve_one, step};
+  use crate::day23::{compute_empty_tiles, dbg_print_grid, solve_one, solve_two, step};
   use crate::day23::Direction::{East, North, South, West};
 
   #[test]
@@ -173,6 +194,15 @@ mod tests {
     let result = solve_one(&grid);
 
     assert_eq!(result, 110);
+  }
+
+  #[test]
+  fn test_part_2() {
+    let map_data = get_part_1_map_data();
+    let grid = lines_to_grid_char_val(&map_data);
+    let result = solve_two(&grid);
+
+    assert_eq!(result, 20);
   }
 
   #[test]
