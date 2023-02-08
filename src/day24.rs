@@ -11,17 +11,52 @@ pub fn part_one() -> u64 {
   solve_one(&grid)
 }
 
+
+pub fn part_two() -> u64 {
+  let input = read_chunks("day24.txt", "\n");
+  let grid = lines_to_grid_char_val(&input);
+  solve_two(&grid)
+}
+
 fn solve_one(grid: &HashMap<Point, char>) -> u64 {
   let (start, end) = get_start_end(grid);
   let walls = get_walls(grid);
   let blizzards = get_blizzards(grid);
   let all_indexed_blizzard_state_locations = index_all_blizzard_state_locations(&walls, &blizzards);
 
+  find_shortest_path(&start, &end, &walls, &all_indexed_blizzard_state_locations, 0) as u64
+}
+
+
+fn solve_two(grid: &HashMap<Point, char>) -> u64 {
+  let (start, end) = get_start_end(grid);
+  let walls = get_walls(grid);
+  let blizzards = get_blizzards(grid);
+  let all_indexed_blizzard_state_locations = index_all_blizzard_state_locations(&walls, &blizzards);
+
+  let to_the_end = find_shortest_path(&start, &end, &walls, &all_indexed_blizzard_state_locations, 0);
+  let back_to_beginning = find_shortest_path(&end, &start, &walls, &all_indexed_blizzard_state_locations, to_the_end);
+  let and_the_end_again = find_shortest_path(&start, &end, &walls, &all_indexed_blizzard_state_locations, back_to_beginning);
+
+  and_the_end_again as u64
+}
+
+fn find_shortest_path(
+  start: &Point,
+  end: &Point,
+  walls: &HashSet<Point>,
+  all_indexed_blizzard_state_locations: &HashMap<usize, HashSet<Point>>,
+  starting_step: usize
+) -> usize {
+
   let default_path_upper_bound = 1_000_000_000_000;
-  let mut shortest_path: u64 = default_path_upper_bound;
+  let mut shortest_path: usize = default_path_upper_bound;
+
+  let min_y = walls.iter().map(|k| k.y).min().unwrap();
+  let max_y = walls.iter().map(|k| k.y).max().unwrap();
 
   let mut to_visit = VecDeque::new();
-  to_visit.push_back(State { steps: 0, position: start.clone() });
+  to_visit.push_back(State { steps: starting_step, position: start.clone() });
   let mut visited = HashSet::new();
 
   while !to_visit.is_empty() {
@@ -51,8 +86,8 @@ fn solve_one(grid: &HashMap<Point, char>) -> u64 {
     //   )
     // }
 
-    if curr.position == end {
-      shortest_path = min(shortest_path, curr.steps as u64);
+    if curr.position == *end {
+      shortest_path = min(shortest_path, curr.steps);
     }
     if curr.steps <= shortest_path as usize {
       let maybe_next_positions = next_step_vectors()
@@ -65,7 +100,7 @@ fn solve_one(grid: &HashMap<Point, char>) -> u64 {
       maybe_next_positions
         .iter()
         .for_each(|p| {
-          let is_valid = !next_blizzard_positions.contains(p) && !walls.contains(p) && p.y >= 0;
+          let is_valid = !next_blizzard_positions.contains(p) && !walls.contains(p) && p.y >= min_y && p.y <= max_y;
 
           if is_valid {
             let next_state = State { steps: curr.steps + 1, position: p.clone() };
@@ -86,9 +121,9 @@ fn solve_one(grid: &HashMap<Point, char>) -> u64 {
     panic!("never found a path");
   }
 
-  let x = 0;
   shortest_path
 }
+
 
 fn normalize_state(blizzard_states: usize, next_state: State) -> State {
   State {
@@ -282,15 +317,10 @@ fn dbg_print_grid_with_blizzard_dirs(walls: &HashSet<Point>, blizzards: &Vec<Bli
   }
 }
 
-pub fn part_two() -> i64 {
-  0
-}
-
-
 #[cfg(test)]
 mod tests {
   use crate::day12::lines_to_grid_char_val;
-  use crate::day24::{get_blizzards, get_walls, index_all_blizzard_state_locations, solve_one};
+  use crate::day24::{get_blizzards, get_walls, index_all_blizzard_state_locations, solve_one, solve_two};
 
   #[test]
   fn test_2_blizzard_environ() {
@@ -312,17 +342,30 @@ mod tests {
 
   #[test]
   fn test_part_1() {
-    let map_lines = vec![
+    let map_lines = get_example_map();
+
+    let grid = lines_to_grid_char_val(&map_lines);
+    let result = solve_one(&grid);
+    assert_eq!(result, 18)
+  }
+
+  #[test]
+  fn test_part_2() {
+    let map_lines = get_example_map();
+
+    let grid = lines_to_grid_char_val(&map_lines);
+    let result = solve_two(&grid);
+    assert_eq!(result, 54)
+  }
+
+  fn get_example_map() -> Vec<String> {
+    vec![
       "#.######".to_string(),
       "#>>.<^<#".to_string(),
       "#.<..<<#".to_string(),
       "#>v.><>#".to_string(),
       "#<^v^^>#".to_string(),
       "######.#".to_string(),
-    ];
-
-    let grid = lines_to_grid_char_val(&map_lines);
-    let result = solve_one(&grid);
-    assert_eq!(result, 18)
+    ]
   }
 }
