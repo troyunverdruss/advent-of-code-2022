@@ -25,9 +25,10 @@ mod day21;
 mod day22;
 mod day23;
 mod day24;
+mod day25;
 
 fn main() {
-  let day_to_solve = 24;
+  let day_to_solve = 25;
 
   if day_to_solve == 0 || day_to_solve == 1 {
     let solution_day01_part1 = day01::part_one();
@@ -194,5 +195,12 @@ fn main() {
     println!("Day 24, part 1: Steps to reach end: {}", solution_day24_part1);
     let solution_day24_part2 = day24::part_two();
     println!("Day 24, part 2: Steps to reach end, start, end again: {}", solution_day24_part2);
+  }
+
+  if day_to_solve == 0 || day_to_solve == 25 {
+    let solution_day25_part1 = day25::part_one();
+    println!("Day 25, part 1: Steps to reach end: {}", solution_day25_part1);
+    let solution_day25_part2 = day25::part_two();
+    println!("Day 25, part 2: Steps to reach end, start, end again: {}", solution_day25_part2);
   }
 }
