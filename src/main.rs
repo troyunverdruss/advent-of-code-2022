@@ -191,8 +191,8 @@ fn main() {
 
   if day_to_solve == 0 || day_to_solve == 24 {
     let solution_day24_part1 = day24::part_one();
-    println!("Day 24, part 1: Empty ground tiles: {}", solution_day24_part1);
+    println!("Day 24, part 1: Steps to reach end: {}", solution_day24_part1);
     let solution_day24_part2 = day24::part_two();
-    println!("Day 24, part 2: ????: {}", solution_day24_part2);
+    println!("Day 24, part 2: Steps to reach end, start, end again: {}", solution_day24_part2);
   }
 }

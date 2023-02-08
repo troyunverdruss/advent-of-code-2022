@@ -17,15 +17,40 @@ fn solve_one(grid: &HashMap<Point, char>) -> u64 {
   let blizzards = get_blizzards(grid);
   let all_indexed_blizzard_state_locations = index_all_blizzard_state_locations(&walls, &blizzards);
 
+  let default_path_upper_bound = 1_000_000_000_000;
+  let mut shortest_path: u64 = default_path_upper_bound;
+
   let mut to_visit = VecDeque::new();
   to_visit.push_back(State { steps: 0, position: start.clone() });
   let mut visited = HashSet::new();
 
-  let default_path_upper_bound = 1_000_000_000_000;
-  let mut shortest_path: u64 = default_path_upper_bound;
-
   while !to_visit.is_empty() {
     let curr = to_visit.pop_front().unwrap();
+
+    // // Debug breakpoints
+    // let test_point = Point { x: 4, y: 3 };
+    // let test_step = 14;
+    // if curr.position == test_point && curr.steps == test_step {
+    //   let blizzards = all_indexed_blizzard_state_locations
+    //     .get(&((curr.steps) % all_indexed_blizzard_state_locations.len())).unwrap();
+    //
+    //   println!("Minute: {}", test_step);
+    //   dbg_print_grid(
+    //     &walls,
+    //     blizzards,
+    //     &curr
+    //   );
+    //
+    //   let maybe_blizzards = all_indexed_blizzard_state_locations
+    //     .get(&((curr.steps + 1) % all_indexed_blizzard_state_locations.len())).unwrap();
+    //   println!("maybe minute 15");
+    //   dbg_print_grid(
+    //     &walls,
+    //     maybe_blizzards,
+    //     &State { steps: 15, position: Point{x: 1, y: 0}, }
+    //   )
+    // }
+
     if curr.position == end {
       shortest_path = min(shortest_path, curr.steps as u64);
     }
@@ -99,20 +124,20 @@ fn index_all_blizzard_state_locations(walls: &HashSet<Point>, blizzards: &Vec<Bl
   let max_x = walls.iter().map(|k| k.x).max().unwrap();
   let min_y = walls.iter().map(|k| k.y).min().unwrap();
   let max_y = walls.iter().map(|k| k.y).max().unwrap();
-  let width = max_x - min_x - 2;
-  let height = max_y - min_y - 2;
+  let width = max_x - min_x - 1;
+  let height = max_y - min_y - 1;
 
   let mut next_blizzards = blizzards.clone();
   for i in 0..(height * width) {
     blizzard_states.insert(i as usize, next_blizzards.iter().map(|b| b.position.clone()).collect());
-    let tmp_blizzards = step_blizzards(walls, &next_blizzards);
+    let tmp_blizzards = step_blizzards(i, walls, &next_blizzards);
     next_blizzards = tmp_blizzards;
   }
 
   blizzard_states
 }
 
-fn step_blizzards(walls: &HashSet<Point>, curr_blizzards: &Vec<Blizzard>) -> Vec<Blizzard> {
+fn step_blizzards(_index: i64, walls: &HashSet<Point>, curr_blizzards: &Vec<Blizzard>) -> Vec<Blizzard> {
   let mut next_blizzards = Vec::new();
 
   let min_x = walls.iter().map(|k| k.x).min().unwrap();
@@ -135,6 +160,10 @@ fn step_blizzards(walls: &HashSet<Point>, curr_blizzards: &Vec<Blizzard>) -> Vec
       next_blizzards.push(Blizzard { position: maybe_next_position, direction: b.direction.clone() })
     }
   }
+
+  // println!("Minute {}", _index);
+  // dbg_print_grid_with_blizzard_dirs(walls, &next_blizzards);
+  // println!();
 
   next_blizzards
 }
@@ -195,11 +224,55 @@ fn get_start_end(grid: &HashMap<Point, char>) -> (Point, Point) {
 }
 
 #[allow(dead_code)]
-pub fn dbg_print_grid(grid: &HashMap<Point, char>) {
-  let min_x = grid.keys().map(|k| k.x).min().unwrap() - 1;
-  let max_x = grid.keys().map(|k| k.x).max().unwrap() + 1;
-  let min_y = grid.keys().map(|k| k.y).min().unwrap() - 1;
-  let max_y = grid.keys().map(|k| k.y).max().unwrap() + 1;
+fn dbg_print_grid(walls: &HashSet<Point>, blizzards: &HashSet<Point>, x1: &State) {
+  let mut grid = HashMap::new();
+
+  walls.iter().for_each(|p| { grid.insert(p.clone(), '#'); });
+  blizzards.iter().for_each(|p| { grid.insert(p.clone(), 'B'); });
+  grid.insert(x1.position.clone(), 'E');
+
+  let min_x = grid.keys().map(|k| k.x).min().unwrap();
+  let max_x = grid.keys().map(|k| k.x).max().unwrap();
+  let min_y = grid.keys().map(|k| k.y).min().unwrap();
+  let max_y = grid.keys().map(|k| k.y).max().unwrap();
+
+  for y in min_y..=max_y {
+    for x in min_x..=max_x {
+      print!("{}", grid.get(&Point { x, y }).unwrap_or(&'.'));
+    }
+    println!();
+  }
+}
+
+#[allow(dead_code)]
+fn dbg_print_grid_with_blizzard_dirs(walls: &HashSet<Point>, blizzards: &Vec<Blizzard>) {
+  let mut grid = HashMap::new();
+
+  walls.iter().for_each(|p| { grid.insert(p.clone(), '#'); });
+  blizzards.iter()
+    .for_each(|b| {
+      let existing = grid.get(&b.position).unwrap_or(&'.').clone();
+      if existing != '.' {
+        match existing.to_string().parse::<usize>() {
+          Ok(num) => {
+            grid.insert(b.position.clone(), (num + 1).to_string().chars().nth(0).unwrap());
+          }
+          Err(_blizzard) => {
+            grid.insert(b.position.clone(), '2');
+          }
+        }
+
+
+      } else {
+        grid.insert(b.position.clone(), b.direction);
+      }
+    }
+    );
+
+  let min_x = grid.keys().map(|k| k.x).min().unwrap();
+  let max_x = grid.keys().map(|k| k.x).max().unwrap();
+  let min_y = grid.keys().map(|k| k.y).min().unwrap();
+  let max_y = grid.keys().map(|k| k.y).max().unwrap();
 
   for y in min_y..=max_y {
     for x in min_x..=max_x {
