@@ -179,9 +179,6 @@ fn parse_input(lines: &Vec<String>) -> HashMap<String, String> {
 
 #[cfg(test)]
 mod tests {
-  use lazy_static::lazy_static;
-  use regex::Regex;
-
   use crate::day21::{math_solver, parse_input, solve_one, solve_two};
 
   #[test]
@@ -230,19 +227,6 @@ mod tests {
     let equation = "(4 / (8 / humn))".to_string();
     let res = math_solver(target_value, equation);
     assert_eq!(res, 2);
-  }
-
-  #[test]
-  fn test_match_operator() {
-    lazy_static! {
-        static ref RE_MATCH_OP: Regex = Regex::new("^(\\(.*\\)) ([-+*\\\\]) (\\d+)$").unwrap();
-    }
-    let s = "(1 * humn) / 4";
-    let caps = RE_MATCH_OP.captures(s).unwrap();
-    let a = caps[1].to_string();
-    let b = caps[2].to_string();
-    let c = caps[3].to_string();
-    let x = 0;
   }
 
   fn get_part_1_input() -> Vec<String> {

@@ -404,10 +404,15 @@ fn get_shapes() -> VecDeque<Vec<Point>> {
 
 #[cfg(test)]
 mod tests {
-  use std::collections::{HashMap, VecDeque};
+  use std::collections::HashMap;
 
-  use crate::day08::Point;
-  use crate::day17::{analyze_find_first_repeating_index_delta, AnalyzeResult, calculate_height_after_dropping_many_shapes, check_if_row_is_new_floor, drop_one_shape, drop_shapes, find_full_line, find_highest_point, get_shapes, JetBlastDirection, parse_input};
+  use crate::day17::{
+    analyze_find_first_repeating_index_delta,
+    calculate_height_after_dropping_many_shapes,
+    drop_shapes, find_highest_point,
+    get_shapes,
+    parse_input,
+  };
   use crate::utils::read_chunks;
 
   #[test]

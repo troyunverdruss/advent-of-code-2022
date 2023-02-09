@@ -337,7 +337,7 @@ mod tests {
     let grid = lines_to_grid_char_val(&map_lines);
     let walls = get_walls(&grid);
     let blizzards = get_blizzards(&grid);
-    let indexed_locations = index_all_blizzard_state_locations(&walls, &blizzards);
+    let _indexed_locations = index_all_blizzard_state_locations(&walls, &blizzards);
   }
 
   #[test]

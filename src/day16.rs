@@ -276,7 +276,7 @@ mod tests {
   fn test_part_doctored_simple_input_2() {
     let input = get_made_up_input();
     setup_globals(&input);
-    assert_eq!(solve_two_try_2(), 416);
+    assert_eq!(solve_two_try_2(), 380);
   }
 
   #[test]

@@ -1,33 +1,68 @@
+use radix::RadixNum;
+
 use crate::utils::read_chunks;
 
-pub fn part_one() -> u64 {
-  let input = read_chunks("day25.txt", "\n");
+pub fn part_one() -> String {
+  let snafu_input = read_chunks("day25.txt", "\n");
+  let decimal_sum: u64 = snafu_input
+    .iter()
+    .map(|sn| snafu_to_decimal(sn))
+    .sum();
 
-  0
+  decimal_to_snafu(&decimal_sum)
 }
 
+fn decimal_to_snafu(d: &u64) -> String {
+  let base_5_num = RadixNum::from_str(&d.to_string(), 10).unwrap()
+    .with_radix(5).unwrap();
 
-pub fn part_two() -> u64 {
-  0
-}
+  let base_5_digits = base_5_num
+    .as_str()
+    .chars()
+    .map(|c| c.to_string().parse::<u64>().unwrap())
+    .collect::<Vec<u64>>();
 
-struct Snafu {}
+  let (converted_digits, final_overflowed) = base_5_digits
+    .iter()
+    .rev()
+    .fold((vec![], false), |(digits, overlflowed), next_digit| {
+      let digit_to_process = if overlflowed {
+        *next_digit + 1
+      } else {
+        *next_digit
+      };
 
-impl Snafu {
-  fn from_decimal(d: &u64) -> String {
-    d.to_string()
+      let (result_digit, result_overflowed) = match digit_to_process {
+        5 => ("0", true),
+        4 => ("-", true),
+        3 => ("=", true),
+        2 => ("2", false),
+        1 => ("1", false),
+        0 => ("0", false),
+        _ => panic!("unknown digit")
+      };
+
+      let mut updated_digits = digits.clone();
+      updated_digits.push(result_digit.to_string());
+
+      (updated_digits, result_overflowed)
+    });
+
+  let almost_string_rep = converted_digits
+    .iter()
+    .rev()
+    .map(|s| s.to_string())
+    .collect::<Vec<String>>()
+    .join("");
+
+  if final_overflowed {
+    format!("1{}", almost_string_rep)
+  } else {
+    almost_string_rep
   }
-
-  fn to_decimal(snafu: &String) -> u64 {
-    0
-  }
 }
 
-fn decimal_to_snafu(d: &i64) -> String {
-  d.to_string()
-}
-
-fn snafu_to_decimal(snafu: &String) -> i64 {
+fn snafu_to_decimal(snafu: &String) -> u64 {
   let chars = snafu.chars().collect::<Vec<char>>();
   let mut power = chars.len() as u32;
   let mut result: i64 = 0;
@@ -45,12 +80,12 @@ fn snafu_to_decimal(snafu: &String) -> i64 {
     };
   }
 
-  result
+  result as u64
 }
 
 #[cfg(test)]
 mod tests {
-  use crate::day25::{decimal_to_snafu, Snafu, snafu_to_decimal};
+  use crate::day25::{decimal_to_snafu, snafu_to_decimal};
 
   #[test]
   fn test_snafu_to_decimal() {
@@ -66,6 +101,7 @@ mod tests {
     let pairs = get_decimal_to_snafu_tuples();
     for p in pairs {
       let converted_to_snafu = decimal_to_snafu(&p.0);
+      println!("  => {}", converted_to_snafu);
       assert_eq!(converted_to_snafu, p.1);
     }
   }
@@ -74,18 +110,18 @@ mod tests {
   fn verify_sample_snafu_numbers_sum_to_correct_value() {
     let snafu_input = part_1_sample_snafu_numbers();
 
-    let sum: i64 = snafu_input
+    let sum: u64 = snafu_input
       .iter()
       .map(|sn| snafu_to_decimal(sn))
       .sum();
 
     assert_eq!(sum, 4890);
 
-    // let snafu = decimal_to_snafu(&4890);
-    // assert_eq!(snafu, "2=-1=0".to_string());
+    let snafu = decimal_to_snafu(&4890);
+    assert_eq!(snafu, "2=-1=0".to_string());
   }
 
-  fn get_decimal_to_snafu_tuples() -> Vec<(i64, String)> {
+  fn get_decimal_to_snafu_tuples() -> Vec<(u64, String)> {
     vec![
       (1, "1".to_string()),
       (2, "2".to_string()),

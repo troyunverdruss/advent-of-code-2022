@@ -187,7 +187,6 @@ fn get_3d_neighbors_modifiers() -> Vec<Point3> {
 #[cfg(test)]
 mod tests {
   use crate::day18::{find_surface_area, parse_input, solve_part_2};
-  use crate::utils::read_chunks;
 
   #[test]
   fn test_simple_input() {

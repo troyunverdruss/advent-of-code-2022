@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 
 use crate::day08::Point;
 use crate::day12::lines_to_grid_char_val;
@@ -101,11 +101,6 @@ fn step(grid: &HashMap<Point, char>, directions: &VecDeque<Direction>) -> (bool,
     if can_stay {
       proposed_moves.push(ProposedMove { current: elf_pos.clone(), destination: elf_pos.clone(), stable: true });
     } else {
-      let test = Point { x: 3, y: 2 };
-      if test == elf_pos {
-        let x = 0;
-      }
-
       let mut moved = false;
       for d in directions {
         let can_move = d.consideration_vectors()
@@ -181,8 +176,8 @@ impl Direction {
 
 #[cfg(test)]
 mod tests {
-  use std::cmp::min;
   use std::collections::VecDeque;
+
   use crate::day12::lines_to_grid_char_val;
   use crate::day23::{compute_empty_tiles, dbg_print_grid, solve_one, solve_two, step};
   use crate::day23::Direction::{East, North, South, West};
@@ -295,25 +290,6 @@ mod tests {
       ".....".to_string(),
       "..##.".to_string(),
       ".....".to_string(),
-    ]
-  }
-
-
-  fn get_part_1_instructions() -> Vec<String> {
-    vec![
-      "10".to_string(),
-      "R".to_string(),
-      "5".to_string(),
-      "L".to_string(),
-      "5".to_string(),
-      "R".to_string(),
-      "10".to_string(),
-      "L".to_string(),
-      "4".to_string(),
-      "R".to_string(),
-      "5".to_string(),
-      "L".to_string(),
-      "5".to_string(),
     ]
   }
 }

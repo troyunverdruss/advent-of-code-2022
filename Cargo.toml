@@ -7,10 +7,7 @@ edition = "2021"
 
 [dependencies]
 serde_json = "1.0"
-memoize = "0.3.3"
 lazy_static = "1.4.0"
 combinations = "0.1.0"
-permutations = "0.1.1"
-eval = "0.4.3"
-eqsolver = "0.1.1"
 regex = "1.7.1"
+radix = "0.6.0"
